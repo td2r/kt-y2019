@@ -1,0 +1,302 @@
+start: s
+accept: ac
+reject: rj
+blank: _
+
+s 0 -> init_separator x <
+s 1 -> init_separator y <
+s 2 -> init_separator z <
+
+init_separator _ -> init_result $$ <
+init_result _ -> put_ast11 0 <
+
+put_ast11 _ -> put_11 * <
+put_11 _ -> put_1 1 <
+put_1 _ -> mul 1 ^
+
+pick_digit 0 -> pick_digit 0 >
+pick_digit 1 -> pick_digit 1 >
+pick_digit 2 -> pick_digit 2 >
+pick_digit $$ -> pick_digit $$ >
+pick_digit x -> mark_then_go_mul 0 >
+pick_digit y -> go_inc y <
+pick_digit z -> go_skip_inc z <
+
+mark_then_go_mul 0 -> go_mul x <
+mark_then_go_mul 1 -> go_mul y <
+mark_then_go_mul 2 -> go_mul z <
+mark_then_go_mul _ -> wipe _ <
+
+go_mul 0 -> go_mul 0 <
+go_mul 1 -> go_mul 1 <
+go_mul 2 -> go_mul 2 <
+go_mul $$ -> go_mul $$ <
+go_mul _ -> put_ast11 _ ^
+
+go_inc 0 -> go_inc 0 <
+go_inc 1 -> go_inc 1 <
+go_inc 2 -> go_inc 2 <
+go_inc $$ -> inc $$ <
+
+go_skip_inc 0 -> go_skip_inc 0 <
+go_skip_inc 1 -> go_skip_inc 1 <
+go_skip_inc 2 -> go_skip_inc 2 <
+go_skip_inc $$ -> skip_inc $$ <
+
+skip_inc 0 -> inc 0 <
+skip_inc 1 -> inc 1 <
+
+inc 0 -> go_next 1 >
+inc 1 -> inc 0 <
+inc _ -> go_next 1 >
+
+go_next 0 -> go_next 0 >
+go_next 1 -> go_next 1 >
+go_next 2 -> go_next 2 >
+go_next $$ -> go_next $$ >
+go_next y -> mark_then_go_mul 1 >
+go_next z -> mark_then_go_mul 2 >
+
+wipe 0 -> wipe _ <
+wipe 1 -> wipe _ <
+wipe 2 -> wipe _ <
+wipe $$ -> to_begining _ <
+
+to_begining 0 -> to_begining 0 <
+to_begining 1 -> to_begining 1 <
+to_begining _ -> ac _ >
+
+mul 0 -> mul_zero_answer_wipe_right 0 >
+mul 1 -> mul_init_separator 1 <
+
+mul_zero_answer_wipe_right * -> mul_zero_answer_wipe_right _ >
+mul_zero_answer_wipe_right 0 -> mul_zero_answer_wipe_right _ >
+mul_zero_answer_wipe_right 1 -> mul_zero_answer_wipe_right _ >
+mul_zero_answer_wipe_right _ -> mul_zero_answer_go_left _ <
+
+mul_zero_answer_wipe_left 0 -> mul_zero_answer_wipe_left _ <
+mul_zero_answer_wipe_left 1 -> mul_zero_answer_wipe_left _ <
+mul_zero_answer_wipe_left * -> mul_zero_answer_wipe_left _ <
+mul_zero_answer_wipe_left $ -> mul_zero_answer_wipe_left _ <
+mul_zero_answer_wipe_left + -> mul_zero_answer_wipe_left _ <
+mul_zero_answer_wipe_left _ -> mul_zero_answer_go_right _ >
+
+mul_zero_answer_go_left _ -> mul_zero_answer_go_left _ <
+mul_zero_answer_go_left 0 -> pick_digit 0 ^
+
+mul_zero_answer_go_right _ -> mul_zero_answer_go_right _ >
+mul_zero_answer_go_right 0 -> pick_digit 0 ^
+
+mul_init_separator _ -> mul_init_result $ <
+mul_init_result _ -> mul_init_plus 0 <
+mul_init_plus _ -> mul_init_mark + >
+mul_init_mark $ -> mul_init_mark $ >
+mul_init_mark 0 -> mul_init_mark 0 >
+mul_init_mark 1 -> mul_init_mark 1 >
+mul_init_mark * -> mul_init_mark * >
+mul_init_mark $$ -> mul_iteration $$ <
+
+mul_append_plus_then_next_iteration _ -> mul_next_iteration + >
+
+mul_iteration 0 -> mul_iteration 0 <
+mul_iteration 1 -> mul_start_append_zero i >
+mul_iteration * -> mul_trample_right * >
+
+mul_next_iteration 0 -> mul_next_iteration 0 >
+mul_next_iteration 1 -> mul_next_iteration 1 >
+mul_next_iteration + -> mul_next_iteration + >
+mul_next_iteration $ -> mul_next_iteration $ >
+mul_next_iteration * -> mul_next_iteration * >
+mul_next_iteration i -> mul_iteration 1 <
+
+mul_start_append_zero 0 -> mul_start_append_zero 0 >
+mul_start_append_zero 1 -> mul_start_append_zero 1 >
+mul_start_append_zero $$ -> mul_mark_then_append_zero $$ <
+
+mul_mark_then_append_zero 0 -> mul_append_zero a <
+mul_mark_then_append_zero 1 -> mul_append_zero b <
+mul_mark_then_append_zero i -> mul_go_copy i <
+
+mul_append_zero 0 -> mul_append_zero 0 <
+mul_append_zero 1 -> mul_append_zero 1 <
+mul_append_zero i -> mul_append_zero i <
+mul_append_zero * -> mul_append_zero * <
+mul_append_zero $ -> mul_append_zero $ <
+mul_append_zero + -> mul_append_zero + <
+mul_append_zero _ -> mul_find_mark 0 >
+
+mul_find_mark 0 -> mul_find_mark 0 >
+mul_find_mark 1 -> mul_find_mark 1 >
+mul_find_mark + -> mul_find_mark + >
+mul_find_mark $ -> mul_find_mark $ >
+mul_find_mark * -> mul_find_mark * >
+mul_find_mark i -> mul_find_mark i >
+mul_find_mark a -> mul_mark_then_append_zero 0 <
+mul_find_mark b -> mul_mark_then_append_zero 1 <
+
+mul_go_copy 0 -> mul_go_copy 0 <
+mul_go_copy 1 -> mul_go_copy 1 <
+mul_go_copy * -> mul_copy * <
+
+mul_copy 0 -> mul_copy_zero a <
+mul_copy 1 -> mul_copy_one b <
+mul_copy $ -> mul_go_add $ <
+
+mul_copy_zero 0 -> mul_copy_zero 0 <
+mul_copy_zero 1 -> mul_copy_zero 1 <
+mul_copy_zero $ -> mul_copy_zero $ <
+mul_copy_zero + -> mul_copy_zero + <
+mul_copy_zero _ -> mul_find_copy_mark 0 >
+
+mul_copy_one 0 -> mul_copy_one 0 <
+mul_copy_one 1 -> mul_copy_one 1 <
+mul_copy_one $ -> mul_copy_one $ <
+mul_copy_one + -> mul_copy_one + <
+mul_copy_one _ -> mul_find_copy_mark 1 >
+
+mul_find_copy_mark 0 -> mul_find_copy_mark 0 >
+mul_find_copy_mark 1 -> mul_find_copy_mark 1 >
+mul_find_copy_mark + -> mul_find_copy_mark + >
+mul_find_copy_mark $ -> mul_find_copy_mark $ >
+mul_find_copy_mark a -> mul_copy 0 <
+mul_find_copy_mark b -> mul_copy 1 <
+
+mul_go_add 0 -> mul_go_add 0 <
+mul_go_add 1 -> mul_go_add 1 <
+mul_go_add + -> mul_go_add + <
+mul_go_add _ -> add _ >
+
+mul_trample_right 0 -> mul_trample_right 0 >
+mul_trample_right 1 -> mul_trample_right 1 >
+mul_trample_right $$ -> mul_trample_left $$ <
+
+mul_trample_left . -> mul_trample_left . <
+mul_trample_left 0 -> mul_trample_left . <
+mul_trample_left 1 -> mul_trample_left . <
+mul_trample_left * -> mul_trample_left . <
+mul_trample_left $ -> mul_pick_and_move . <
+
+mul_pick_and_move 0 -> mul_move_zero . >
+mul_pick_and_move 1 -> mul_move_one . >
+mul_pick_and_move + -> mul_wipe_dots _ >
+
+mul_move_zero . -> mul_move_zero 0 >
+mul_move_zero 0 -> mul_skip_then_pick_for_move 0 <
+mul_move_zero 1 -> mul_skip_then_pick_for_move 1 <
+mul_move_zero $$ -> mul_skip_then_pick_for_move $$ <
+
+mul_move_one . -> mul_move_one 1 >
+mul_move_one 0 -> mul_skip_then_pick_for_move 0 <
+mul_move_one 1 -> mul_skip_then_pick_for_move 1 <
+mul_move_one $$ -> mul_skip_then_pick_for_move $$ <
+
+mul_skip_then_pick_for_move 0 -> mul_pick_for_move 0 <
+mul_skip_then_pick_for_move 1 -> mul_pick_for_move 1 <
+
+mul_pick_for_move 0 -> mul_pick_for_move . <
+mul_pick_for_move 1 -> mul_pick_for_move . <
+mul_pick_for_move . -> mul_pick_and_move . <
+
+mul_wipe_dots . -> mul_wipe_dots _ >
+mul_wipe_dots 0 -> pick_digit 0 ^
+mul_wipe_dots 1 -> pick_digit 1 ^
+
+add 0 -> add 0 >
+add 1 -> add 1 >
+add + -> add_mark + <
+
+add_mark 0 -> add_find_end a >
+add_mark 1 -> add_find_end b >
+
+add_find_end + -> add_find_end + >
+add_find_end 0 -> add_find_end 0 >
+add_find_end 1 -> add_find_end 1 >
+add_find_end $ -> add_pick $ <
+
+add_pick 0 -> add_carry0 a <
+add_pick 1 -> add_carry1 b <
+add_pick + -> add_trample . >
+
+add_carry0 0 -> add_carry0 0 <
+add_carry0 1 -> add_carry0 1 <
+add_carry0 + -> add_carry0 + <
+add_carry0 a -> add_mark_then_find_mark 0 <
+add_carry0 b -> add_mark_then_find_mark 1 <
+
+add_carry1 0 -> add_carry1 0 <
+add_carry1 1 -> add_carry1 1 <
+add_carry1 + -> add_carry1 + <
+add_carry1 a -> add_mark_then_find_mark 1 <
+add_carry1 b -> add_mark_then_overflow 0 <
+
+add_mark_then_overflow 0 -> add_find_mark b >
+add_mark_then_overflow 1 -> add_overflow a <
+add_mark_then_overflow _ -> add_find_mark b >
+
+add_overflow 0 -> add_find_2marks 1 >
+add_overflow 1 -> add_overflow 0 <
+add_overflow _ -> add_find_2marks 1 >
+
+add_find_2marks 0 -> add_find_2marks 0 >
+add_find_2marks 1 -> add_find_2marks 1 >
+add_find_2marks a -> add_find_mark a >
+add_find_2marks b -> add_find_mark b >
+
+add_mark_then_find_mark 0 -> add_find_mark a >
+add_mark_then_find_mark 1 -> add_find_mark b >
+add_mark_then_find_mark _ -> add_find_mark a >
+
+add_find_mark 0 -> add_find_mark 0 >
+add_find_mark 1 -> add_find_mark 1 >
+add_find_mark + -> add_find_mark + >
+add_find_mark a -> add_pick 0 <
+add_find_mark b -> add_pick 1 <
+
+add_trample 0 -> add_trample . >
+add_trample 1 -> add_trample . >
+add_trample $ -> add_pick_to_move $ <
+
+add_pick_to_move . -> add_pick_to_move . <
+add_pick_to_move 0 -> add_check_before_pick 0 <
+add_pick_to_move 1 -> add_check_before_pick 1 <
+add_pick_to_move a -> add_check_before_pick a <
+add_pick_to_move b -> add_check_before_pick b <
+
+add_check_before_pick 0 -> add_pick_not_last 0 >
+add_check_before_pick 1 -> add_pick_not_last 1 >
+add_check_before_pick a -> add_pick_not_last a >
+add_check_before_pick b -> add_pick_not_last b >
+add_check_before_pick _ -> add_pick_last _ >
+
+add_pick_not_last 0 -> add_carry_not_last_zero . >
+add_pick_not_last 1 -> add_carry_not_last_one . >
+add_pick_not_last a -> add_carry_not_last_zero . >
+add_pick_not_last b -> add_carry_not_last_one . >
+
+add_carry_not_last_zero . -> add_carry_not_last_zero . >
+add_carry_not_last_zero 0 -> add_put_not_last_zero 0 <
+add_carry_not_last_zero 1 -> add_put_not_last_zero 1 <
+add_carry_not_last_zero $ -> add_put_not_last_zero $ <
+
+add_put_not_last_zero . -> add_pick_to_move 0 <
+
+add_carry_not_last_one . -> add_carry_not_last_one . >
+add_carry_not_last_one 0 -> add_put_not_last_one 0 <
+add_carry_not_last_one 1 -> add_put_not_last_one 1 <
+add_carry_not_last_one $ -> add_put_not_last_one $ <
+
+add_put_not_last_one . -> add_pick_to_move 1 <
+
+add_pick_last 1 -> add_carry_last_one _ >
+add_pick_last a -> add_carry_last_zero _ >
+add_pick_last b -> add_carry_last_one _ >
+
+add_carry_last_zero . -> add_carry_last_zero _ >
+add_carry_last_zero 0 -> mul_append_plus_then_next_iteration 0 <
+add_carry_last_zero 1 -> mul_append_plus_then_next_iteration 1 <
+
+add_carry_last_one . -> add_carry_last_one _ >
+add_carry_last_one 0 -> add_put_last_one 0 <
+add_carry_last_one 1 -> add_put_last_one 1 <
+
+add_put_last_one _ -> mul_append_plus_then_next_iteration 1 <
