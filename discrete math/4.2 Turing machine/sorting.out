@@ -1,0 +1,150 @@
+3
+
+S 0 _ _ -> find_delimiter 0 ^ _ ^ _ ^
+S 1 _ _ -> find_delimiter 1 ^ _ ^ _ ^
+
+find_delimiter 0 _ _ -> find_delimiter 0 > _ ^ _ ^
+find_delimiter 1 _ _ -> find_delimiter 1 > _ ^ _ ^
+find_delimiter | _ _ -> next_iteration | > _ ^ _ ^
+find_delimiter _ _ _ -> answer _ < _ ^ _ ^
+
+next_iteration 0 _ _ -> next_iteration 0 > _ ^ _ ^
+next_iteration 1 _ _ -> next_iteration 1 > _ ^ _ ^
+next_iteration | _ _ -> next_iteration | > _ ^ _ ^
+next_iteration _ _ _ -> copy _ < _ ^ _ ^
+
+copy 0 _ _ -> copy 0 < 0 < _ ^
+copy 1 _ _ -> copy 1 < 1 < _ ^
+copy | _ _ -> copy | < . ^ _ ^
+copy 0 _ . -> copy 0 < 0 < . ^
+copy 1 _ . -> copy 1 < 1 < . ^
+copy | _ . -> skip_2num | > . ^ . ^
+copy i _ . -> skip_2num i > . ^ . ^
+copy _ _ . -> skip_2num _ > . ^ . ^
+copy 0 . _ -> copy 0 < . ^ 0 <
+copy 1 . _ -> copy 1 < . ^ 1 <
+copy | . _ -> skip_2num | > . ^ . ^
+copy i . _ -> skip_2num i > . ^ . ^
+copy _ . _ -> skip_2num _ > . ^ . ^
+
+skip_2num 0 . . -> skip_2num . > . ^ . ^
+skip_2num 1 . . -> skip_2num . > . ^ . ^
+skip_2num | . . -> skip_1num . > . ^ . ^
+skip_1num 0 . . -> skip_1num . > . ^ . ^
+skip_1num 1 . . -> skip_1num . > . ^ . ^
+skip_1num | . . -> cmp | ^ . ^ . ^
+skip_1num _ . . -> cmp _ ^ . ^ . ^
+
+cmp | . . -> cmp | ^ . > . >
+cmp | 0 0 -> cmp | ^ 0 > 0 >
+cmp | 0 1 -> cmp_ls | ^ 0 > 1 >
+cmp | 1 0 -> cmp_gr | ^ 1 > 0 >
+cmp | 1 1 -> cmp | ^ 1 > 1 >
+cmp | 0 _ -> cmp_end_paste_first | ^ 0 > _ ^
+cmp | 1 _ -> cmp_end_paste_first | ^ 1 > _ ^
+cmp | _ 0 -> cmp_end_paste_second | ^ _ ^ 0 >
+cmp | _ 1 -> cmp_end_paste_second | ^ _ ^ 1 >
+cmp | _ _ -> cmp_end_paste_first | ^ _ ^ _ ^
+
+cmp_ls | 0 0 -> cmp_ls | ^ 0 > 0 >
+cmp_ls | 0 1 -> cmp_ls | ^ 0 > 1 >
+cmp_ls | 1 0 -> cmp_ls | ^ 1 > 0 >
+cmp_ls | 1 1 -> cmp_ls | ^ 1 > 1 >
+cmp_ls | 0 _ -> cmp_end_paste_first | ^ 0 > _ ^
+cmp_ls | 1 _ -> cmp_end_paste_first | ^ 1 > _ ^
+cmp_ls | _ 0 -> cmp_end_paste_second | ^ _ ^ 0 >
+cmp_ls | _ 1 -> cmp_end_paste_second | ^ _ ^ 1 >
+cmp_ls | _ _ -> cmp_end_paste_second | ^ _ ^ _ ^
+
+cmp_gr | 0 0 -> cmp_gr | ^ 0 > 0 >
+cmp_gr | 0 1 -> cmp_gr | ^ 0 > 1 >
+cmp_gr | 1 0 -> cmp_gr | ^ 1 > 0 >
+cmp_gr | 1 1 -> cmp_gr | ^ 1 > 1 >
+cmp_gr | 0 _ -> cmp_end_paste_first | ^ 0 > _ ^
+cmp_gr | 1 _ -> cmp_end_paste_first | ^ 1 > _ ^
+cmp_gr | _ 0 -> cmp_end_paste_second | ^ _ ^ 0 >
+cmp_gr | _ 1 -> cmp_end_paste_second | ^ _ ^ 1 >
+cmp_gr | _ _ -> cmp_end_paste_first | ^ _ ^ _ ^
+
+cmp_end_paste_first | 0 _ -> cmp_end_paste_first | ^ 0 > _ ^
+cmp_end_paste_first | 1 _ -> cmp_end_paste_first | ^ 1 > _ ^
+cmp_end_paste_first | _ _ -> paste_first | < _ < . ^
+
+cmp_end_paste_second | _ 0 -> cmp_end_paste_second | ^ _ ^ 0 >
+cmp_end_paste_second | _ 1 -> cmp_end_paste_second | ^ _ ^ 1 >
+cmp_end_paste_second | _ _ -> paste_second | < . ^ _ <
+
+cmp _ . . -> cmp _ ^ . > . >
+cmp _ 0 0 -> cmp _ ^ 0 > 0 >
+cmp _ 0 1 -> cmp_ls _ ^ 0 > 1 >
+cmp _ 1 0 -> cmp_gr _ ^ 1 > 0 >
+cmp _ 1 1 -> cmp _ ^ 1 > 1 >
+cmp _ 0 _ -> cmp_end_paste_first _ ^ 0 > _ ^
+cmp _ 1 _ -> cmp_end_paste_first _ ^ 1 > _ ^
+cmp _ _ 0 -> cmp_end_paste_second _ ^ _ ^ 0 >
+cmp _ _ 1 -> cmp_end_paste_second _ ^ _ ^ 1 >
+cmp _ _ _ -> cmp_end_paste_first _ ^ _ ^ _ ^
+
+cmp_ls _ 0 0 -> cmp_ls _ ^ 0 > 0 >
+cmp_ls _ 0 1 -> cmp_ls _ ^ 0 > 1 >
+cmp_ls _ 1 0 -> cmp_ls _ ^ 1 > 0 >
+cmp_ls _ 1 1 -> cmp_ls _ ^ 1 > 1 >
+cmp_ls _ 0 _ -> cmp_end_paste_first _ ^ 0 > _ ^
+cmp_ls _ 1 _ -> cmp_end_paste_first _ ^ 1 > _ ^
+cmp_ls _ _ 0 -> cmp_end_paste_second _ ^ _ ^ 0 >
+cmp_ls _ _ 1 -> cmp_end_paste_second _ ^ _ ^ 1 >
+cmp_ls _ _ _ -> cmp_end_paste_second _ ^ _ ^ _ ^
+
+cmp_gr _ 0 0 -> cmp_gr _ ^ 0 > 0 >
+cmp_gr _ 0 1 -> cmp_gr _ ^ 0 > 1 >
+cmp_gr _ 1 0 -> cmp_gr _ ^ 1 > 0 >
+cmp_gr _ 1 1 -> cmp_gr _ ^ 1 > 1 >
+cmp_gr _ 0 _ -> cmp_end_paste_first _ ^ 0 > _ ^
+cmp_gr _ 1 _ -> cmp_end_paste_first _ ^ 1 > _ ^
+cmp_gr _ _ 0 -> cmp_end_paste_second _ ^ _ ^ 0 >
+cmp_gr _ _ 1 -> cmp_end_paste_second _ ^ _ ^ 1 >
+cmp_gr _ _ _ -> cmp_end_paste_first _ ^ _ ^ _ ^
+
+cmp_end_paste_first _ 0 _ -> cmp_end_paste_first _ ^ 0 > _ ^
+cmp_end_paste_first _ 1 _ -> cmp_end_paste_first _ ^ 1 > _ ^
+cmp_end_paste_first _ _ _ -> paste_first _ < _ < . ^
+
+cmp_end_paste_second _ _ 0 -> cmp_end_paste_second _ ^ _ ^ 0 >
+cmp_end_paste_second _ _ 1 -> cmp_end_paste_second _ ^ _ ^ 1 >
+cmp_end_paste_second _ _ _ -> paste_second _ < . ^ _ <
+
+paste_first . 0 . -> paste_first 0 < _ < . ^
+paste_first . 1 . -> paste_first 1 < _ < . ^
+paste_first . . . -> paste_second | < _ ^ _ <
+paste_first . 0 _ -> paste_first 0 < 0 < _ ^
+paste_first . 1 _ -> paste_first 1 < 1 < _ ^
+paste_first | . _ -> copy | < . ^ _ ^
+paste_first i . _ -> next_mark | > . ^ _ ^
+paste_first _ . _ -> next_mark _ > . ^ _ ^
+
+paste_second . . 0 -> paste_second 0 < . ^ _ <
+paste_second . . 1 -> paste_second 1 < . ^ _ <
+paste_second . . . -> paste_first | < _ < _ ^
+paste_second . _ 0 -> paste_second 0 < _ ^ 0 <
+paste_second . _ 1 -> paste_second 1 < _ ^ 1 <
+paste_second | _ . -> copy | < _ ^ . ^
+paste_second i _ . -> next_mark | > _ ^ . ^
+paste_second _ _ . -> next_mark _ > _ ^ . ^
+
+next_mark 0 . _ -> next_mark 0 > . ^ _ ^
+next_mark 1 . _ -> next_mark 1 > . ^ _ ^
+next_mark | . _ -> next_mark | ^ _ > _ ^
+next_mark | 0 _ -> next_mark | ^ _ > _ ^
+next_mark | 1 _ -> next_mark | ^ _ > _ ^
+next_mark 0 _ . -> next_mark 0 > _ ^ . ^
+next_mark 1 _ . -> next_mark 1 > _ ^ . ^
+next_mark | _ . -> next_mark | ^ _ ^ _ >
+next_mark | _ 0 -> next_mark | ^ _ ^ _ >
+next_mark | _ 1 -> next_mark | ^ _ ^ _ >
+next_mark | _ _ -> find_delimiter i > _ ^ _ ^
+
+answer 0 _ _ -> answer 0 < _ ^ _ ^
+answer 1 _ _ -> answer 1 < _ ^ _ ^
+answer | _ _ -> answer | < _ ^ _ ^
+answer i _ _ -> answer | < _ ^ _ ^
+answer _ _ _ -> AC _ > _ ^ _ ^

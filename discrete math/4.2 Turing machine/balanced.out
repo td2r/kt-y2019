@@ -1,0 +1,28 @@
+start: s
+accept: ac
+reject: rj
+blank: _
+
+s ( -> get_close . >
+s ) -> rj ) ^
+s _ -> ac _ ^
+
+get_close ( -> get_close ( >
+get_close ) -> find_open_left . <
+get_close . -> get_close . >
+get_close _ -> rj _ ^
+
+find_open_left ( -> get_close . >
+find_open_left ) -> get_open_left ) <
+find_open_left . -> find_open_left . <
+find_open_left _ -> find_open_right _ >
+
+get_open_left ( -> get_close . >
+get_open_left ) -> get_open_left ) <
+get_open_left . -> get_open_left . <
+get_open_left _ -> rj _ ^
+
+find_open_right ( -> get_close . >
+find_open_right ) -> rj ) ^
+find_open_right . -> find_open_right . >
+find_open_right _ -> ac _ ^

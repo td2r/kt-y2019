@@ -1,0 +1,78 @@
+start: s
+accept: ac
+reject: rj
+blank: _
+
+s 0 -> pick 0 ^
+s 1 -> pick 1 ^
+
+pick 0 -> carry_zero1 @ >
+pick 1 -> carry_one1 @ >
+pick < -> find_digit < >
+
+find_digit # -> find_digit # >
+find_digit 0 -> ac 0 ^
+find_digit 1 -> ac 1 ^
+find_digit _ -> rj _ ^
+
+carry_zero1 0 -> carry_zero1 0 >
+carry_zero1 1 -> carry_zero1 1 >
+carry_zero1 < -> carry_zero2 < >
+
+carry_one1 0 -> carry_one1 0 >
+carry_one1 1 -> carry_one1 1 >
+carry_one1 < -> carry_one2 < >
+
+carry_zero2 # -> carry_zero2 # >
+carry_zero2 0 -> back # <
+carry_zero2 1 -> back_ac # <
+carry_zero2 _ -> rj _ ^
+
+carry_one2 # -> carry_one2 # >
+carry_one2 0 -> back_rj # <
+carry_one2 1 -> back # <
+carry_one2 _ -> rj _ ^
+
+back # -> back # <
+back < -> back < <
+back 0 -> back 0 <
+back 1 -> back 1 <
+back @ -> pick @ >
+
+back_ac # -> back_ac # <
+back_ac < -> back_ac < <
+back_ac 0 -> back_ac 0 <
+back_ac 1 -> back_ac 1 <
+back_ac @ -> pick_ac @ >
+
+back_rj # -> back_rj # <
+back_rj < -> back_rj < <
+back_rj 0 -> back_rj 0 <
+back_rj 1 -> back_rj 1 <
+back_rj @ -> pick_rj @ >
+
+pick_ac 0 -> carry_ac1 @ >
+pick_ac 1 -> carry_ac1 @ >
+pick_ac < -> ac < ^
+
+pick_rj 0 -> carry_rj1 @ >
+pick_rj 1 -> carry_rj1 @ >
+pick_rj < -> find_digit < >
+
+carry_ac1 0 -> carry_ac1 0 >
+carry_ac1 1 -> carry_ac1 1 >
+carry_ac1 < -> carry_ac2 < >
+
+carry_rj1 0 -> carry_rj1 0 >
+carry_rj1 1 -> carry_rj1 1 >
+carry_rj1 < -> carry_rj2 < >
+
+carry_ac2 # -> carry_ac2 # >
+carry_ac2 0 -> back_ac # <
+carry_ac2 1 -> back_ac # <
+carry_ac2 _ -> rj _ ^
+
+carry_rj2 # -> carry_rj2 # >
+carry_rj2 0 -> back_rj # <
+carry_rj2 1 -> back_rj # <
+carry_rj2 _ -> rj _ ^

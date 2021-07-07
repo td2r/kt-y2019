@@ -1,0 +1,74 @@
+3
+
+S 0 _ _ -> iter 0 ^ _ ^ _ ^
+S 1 _ _ -> iter 1 ^ _ ^ _ ^
+S ( _ _ -> iter ( ^ _ ^ _ ^
+
+iter 0 _ _ -> iter _ > 0 > _ ^
+iter 1 _ _ -> iter _ > 1 > _ ^
+iter a _ _ -> and a ^ _ ^ _ <
+iter o _ _ -> or o ^ _ ^ _ <
+iter ( _ _ -> iter _ > _ ^ ( >
+iter ) _ _ -> cb_pop _ ^ _ ^ _ <
+iter _ _ _ -> final_pop _ ^ _ ^ _ <
+
+and a _ a -> and_pop _ ^ _ ^ a ^
+and a _ o -> push_and _ ^ _ ^ o >
+and a _ ( -> push_and _ ^ _ ^ ( >
+and a _ _ -> push_and _ ^ _ ^ _ ^
+
+and_pop _ _ a -> and_pop _ ^ a > _ <
+and_pop _ _ o -> push_and _ ^ _ ^ o >
+and_pop _ _ ( -> push_and _ ^ _ ^ ( >
+and_pop _ _ _ -> push_and _ ^ _ ^ _ ^
+
+or o _ a -> or_pop  _ ^ _ ^ a ^
+or o _ o -> or_pop _ ^ _ ^ o ^
+or o _ ( -> push_or _ ^ _ ^ ( >
+or o _ _ -> push_or _ ^ _ ^ _ ^
+
+or_pop _ _ a -> or_pop _ ^ a > _ <
+or_pop _ _ o -> or_pop _ ^ o > _ <
+or_pop _ _ ( -> push_or _ ^ _ ^ ( >
+or_pop _ _ _ -> push_or _ ^ _ ^ _ ^
+
+push_and _ _ _ -> iter _ > _ ^ a >
+push_or _ _ _ -> iter _ > _ ^ o >
+
+cb_pop _ _ a -> cb_pop _ ^ a > _ <
+cb_pop _ _ o -> cb_pop _ ^ o > _ <
+cb_pop _ _ ( -> iter _ > _ ^ _ ^
+
+final_pop _ _ a -> final_pop _ ^ a > _ <
+final_pop _ _ o -> final_pop _ ^ o > _ <
+final_pop _ _ _ -> postfix _ ^ _ < _ ^
+
+postfix _ 0 _ -> postfix _ ^ 0 < _ ^
+postfix _ 1 _ -> postfix _ ^ 1 < _ ^
+postfix _ a _ -> postfix _ ^ a < _ ^
+postfix _ o _ -> postfix _ ^ o < _ ^
+postfix _ _ _ -> postfix_iter _ ^ _ > _ ^
+
+postfix_iter _ 0 _ -> postfix_iter 0 > _ > _ ^
+postfix_iter _ 1 _ -> postfix_iter 1 > _ > _ ^
+postfix_iter _ a _ -> postfix_and _ < a ^ _ ^
+postfix_iter _ o _ -> postfix_or _ < o ^ _ ^
+postfix_iter _ _ _ -> AC _ < _ ^ _ ^
+
+postfix_and 0 a _ -> postfix_and_zero _ < a ^ _ ^
+postfix_and 1 a _ -> postfix_and_one _ < a ^ _ ^
+
+postfix_and_zero 0 a _ -> postfix_iter 0 > _ > _ ^
+postfix_and_zero 1 a _ -> postfix_iter 0 > _ > _ ^
+
+postfix_and_one 0 a _ -> postfix_iter 0 > _ > _ ^
+postfix_and_one 1 a _ -> postfix_iter 1 > _ > _ ^
+
+postfix_or 0 o _ -> postfix_or_zero _ < o ^ _ ^
+postfix_or 1 o _ -> postfix_or_one _ < o ^ _ ^
+
+postfix_or_zero 0 o _ -> postfix_iter 0 > _ > _ ^
+postfix_or_zero 1 o _ -> postfix_iter 1 > _ > _ ^
+
+postfix_or_one 0 o _ -> postfix_iter 1 > _ > _ ^
+postfix_or_one 1 o _ -> postfix_iter 1 > _ > _ ^

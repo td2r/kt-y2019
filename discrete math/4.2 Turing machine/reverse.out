@@ -1,0 +1,31 @@
+start: s
+accept: ac
+reject: rj
+blank: _
+
+s 0 -> s 0 >
+s 1 -> s 1 >
+s _ -> get _ <
+
+get 0 -> put0 e >
+get 1 -> put1 e >
+get e -> get e <
+get _ -> wipe _ >
+
+put0 0 -> put0 0 >
+put0 1 -> put0 1 >
+put0 e -> put0 e >
+put0 _ -> go_back 0 <
+
+put1 0 -> put1 0 >
+put1 1 -> put1 1 >
+put1 e -> put1 e >
+put1 _ -> go_back 1 <
+
+go_back 0 -> go_back 0 <
+go_back 1 -> go_back 1 <
+go_back e -> get e <
+
+wipe e -> wipe _ >
+wipe 0 -> ac 0 ^
+wipe 1 -> ac 1 ^

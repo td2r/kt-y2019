@@ -1,0 +1,59 @@
+start: s
+accept: ac
+reject: rj
+blank: _
+
+s _ -> ac _ ^
+
+s 0 -> skip_go_right 0 ^
+s 1 -> skip_go_right 1 ^
+
+
+right_paint 0 -> right_paint a >
+right_paint 1 -> right_paint b >
+
+right_paint a -> skip_go_left a <
+right_paint b -> skip_go_left b <
+right_paint _ -> skip_go_left _ <
+
+
+skip_go_right 0 -> right_paint 0 >
+skip_go_right 1 -> right_paint 1 >
+skip_go_right a -> left_check_0 - <
+skip_go_right b -> left_check_1 - <
+
+
+left_paint a -> left_paint 0 <
+left_paint b -> left_paint 1 <
+
+left_paint 0 -> skip_go_right 0 >
+left_paint 1 -> skip_go_right 1 >
+
+
+skip_go_left a -> left_paint a <
+skip_go_left b -> left_paint b <
+skip_go_left 0 -> rj 0 >
+skip_go_left 1 -> rj 1 >
+
+left_check_0 0 -> left_check_0 0 <
+left_check_0 1 -> left_check_0 1 <
+left_check_0 - -> left_check_0 - <
+left_check_0 _ -> check_0 _ >
+
+check_0 0 -> right_check _ >
+check_0 1 -> rj 1 ^
+
+left_check_1 0 -> left_check_1 0 <
+left_check_1 1 -> left_check_1 1 <
+left_check_1 - -> left_check_1 - <
+left_check_1 _ -> check_1 _ >
+
+check_1 0 -> rj 0 ^
+check_1 1 -> right_check _ >
+
+right_check 0 -> right_check 0 >
+right_check 1 -> right_check 1 >
+right_check - -> right_check - >
+right_check a -> left_check_0 - <
+right_check b -> left_check_1 - <
+right_check _ -> ac _ ^

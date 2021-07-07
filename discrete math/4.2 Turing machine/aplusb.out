@@ -1,0 +1,44 @@
+start: s
+accept: ac
+reject: rj
+blank: _
+
+s 0 -> go_right 0 ^
+s 1 -> go_right 1 ^
+s + -> go_right + ^
+s _ -> go_right _ ^
+
+dec 0 -> dec 1 <
+dec 1 -> go_left 0 <
+dec + -> flush_go_right + >
+dec _ -> rj _ ^
+
+go_left 0 -> go_left 0 <
+go_left 1 -> go_left 1 <
+go_left + -> inc + <
+go_left _ -> rj _ ^
+
+inc 0 -> go_right 1 >
+inc 1 -> inc 0 <
+inc + -> rj + ^
+inc _ -> go_right 1 >
+
+go_right 0 -> go_right 0 >
+go_right 1 -> go_right 1 >
+go_right + -> go_right + >
+go_right _ -> dec _ <
+
+flush_go_right 0 -> flush_go_right + >
+flush_go_right 1 -> flush_go_right + >
+flush_go_right + -> rj + ^
+flush_go_right _ -> flush _ <
+
+flush 0 -> flush_go_left 0 <
+flush 1 -> flush_go_left 1 <
+flush + -> flush _ <
+flush _ -> rj _ ^
+
+flush_go_left 0 -> flush_go_left 0 <
+flush_go_left 1 -> flush_go_left 1 <
+flush_go_left + -> rj + ^
+flush_go_left _ -> ac _ >
