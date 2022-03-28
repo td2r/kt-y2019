@@ -1,0 +1,106 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc} % если ваш файл содержит русский текст, нужно указать кодировку
+\usepackage[russian]{babel} % для того, чтобы писать русский текст
+\usepackage{amsmath} % для команды equation*
+\usepackage{hyperref} % для вставки ссылок
+\usepackage{graphicx}
+\usepackage{amsfonts}
+\usepackage{dsfont}
+\usepackage{textcomp}
+\usepackage{multicol}
+\usepackage{verbatim}
+\usepackage{makecell}
+\usepackage{amssymb}
+\title{Лабораторная работа №3. Использование автоматических генераторов анализаторов Bison и ANTLR}
+\date{22 ноября 2021 г.}
+\author{Наумов Иван M33391 \\ Вариант 2\\ Арифметические выражения}
+
+%\usepackage{vmargin}
+%\setpapersize{A4}
+%\setmarginsrb{2cm}{1.5cm}{1cm}{1.5cm}{0pt}{0mm}{0pt}{13mm}
+%\usepackage{indentfirst}
+%\sloppy
+\begin{document}
+	\maketitle
+	
+	\section*{Грамматика}
+	Воспользуемся следующей грамматикой для разбора арифметических выражений со стандартными операциями, скобками и унарным минусом:
+	\begin{multicols}{2}
+		\begin{align}
+			E & \rightarrow E+T \\
+			E & \rightarrow E-T \\
+			E & \rightarrow T \\
+			T & \rightarrow T*F \\
+			T & \rightarrow T/F \\
+			T & \rightarrow F \\
+			F & \rightarrow (E) \\
+			F & \rightarrow -F \\
+			F & \rightarrow n
+		\end{align}
+		
+		\columnbreak
+	
+		\begin{align*}
+			\begin{tabular}{|c|c|}
+			\hline
+			$E$ & Выражение \\
+			\hline
+			$T$ & Слагаемое(Вычитаемое) \\
+			\hline
+			$F$ & Множитель(Делитель) \\
+			\hline
+			$n$ & Неотриц. число \\
+			\hline
+			\end{tabular}
+		\end{align*}
+	\end{multicols}
+
+	\newpage
+
+	Избавимся от левой рекурсии:
+	
+	\begin{multicols}{2}
+		\setcounter{equation}{0}
+		\begin{align}
+			E & \rightarrow TE' \\
+			E' & \rightarrow +TE' \\
+			E' & \rightarrow -TE' \\
+			E' & \rightarrow \varepsilon \\
+			T & \rightarrow FT' \\
+			T' & \rightarrow *FT' \\
+			T' & \rightarrow /FT' \\
+			T' & \rightarrow \varepsilon \\
+			F & \rightarrow (E) \\
+			F & \rightarrow -F \\
+			F & \rightarrow n
+		\end{align}
+		
+		\columnbreak
+		
+		\begin{align*}
+			\begin{tabular}{|c|c|}
+			\hline
+			$E$ & Выражение \\
+			\hline
+			$E'$ & Правая часть сложения/вычитания \\
+			\hline
+			$T$ & Слагаемое(Вычитаемое) \\
+			\hline
+			$T'$ & Правая часть умножения/деления \\
+			\hline
+			$F$ & Множитель(Делитель) \\
+			\hline
+			$n$ & Неотриц. число \\
+			\hline
+			\end{tabular}
+		\end{align*}
+	\end{multicols}
+
+	\section*{Реализация}
+	
+	Воспользуемся автоматическим генератором парсеров ANTLR. Заведем для каждого нетерминала синтезируемый атрибут для значения этого выражения. Для $E'$ и $T'$ заведем также и наследуемый - значение левой части. Также заведем глобальный словарь $\operatorname{memory}$ для хранения значений переменных и StringBuilder $\operatorname{sb}$ для вывода.
+	
+	\verbatiminput{src/main/grammar/Expr.g4}
+	
+\end{document}

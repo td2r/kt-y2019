@@ -1,0 +1,329 @@
+terminals:
+power -> [ \t\n\r]*\*\*
+f -> [ \t\n\r]*[a-zA-Z]+
+n -> [ \t\n\r]*[0-9]+
+plus -> [ \t\n\r]*\+
+minus -> [ \t\n\r]*-
+lp -> [ \t\n\r]*\(
+rp -> [ \t\n\r]*\)
+aster -> [ \t\n\r]*\*
+slash -> [ \t\n\r]*/
+
+nonterminals:
+  attrs {int value}
+  rules {
+    E -> E,minus,T,; constructor {value = $E->value - $T->value;}
+    E -> E,plus,T,; constructor {value = $E->value + $T->value;}
+    E -> T,; constructor {value = $T->value;}
+  attrs {}
+  rules {
+    E$ -> E,; constructor {}
+  attrs {int value}
+  rules {
+    F -> lp,E,rp,; constructor {value = $E->value;}
+    F -> n,; constructor {value = std::stoi($n->text);}
+  attrs {int value}
+  rules {
+    P -> F,; constructor {value = $F->value;}
+    P -> F,power,P,; constructor {value = (int) (std::pow((double) $F->value, (double) $P->value) + 0.5); }
+  attrs {int value}
+  rules {
+    T -> P,; constructor {value = $P->value;}
+    T -> T,aster,P,; constructor {value = $T->value * $P->value;}
+    T -> T,slash,P,; constructor {value = $T->value / $P->value;}
+
+rules
+[0] = E$ -> E
+[1] = E -> E minus T
+[2] = E -> E plus T
+[3] = E -> T
+[4] = F -> lp E rp
+[5] = F -> n
+[6] = P -> F
+[7] = P -> F power P
+[8] = T -> P
+[9] = T -> T aster P
+[10] = T -> T slash P
+
+FIRST
+E: {lp, n}
+E$: {lp, n}
+F: {lp, n}
+P: {lp, n}
+T: {lp, n}
+
+nodes
+[0]: {
+    E$ -> ·
+    E -> · minus T
+    E -> · plus T
+    E -> ·
+    F -> · E rp
+    F -> ·
+    P -> ·
+    P -> · power P
+    T -> ·
+    T -> · aster P
+    T -> · slash P
+}
+[1]: {
+    F -> n ·
+}
+[2]: {
+    E -> · minus T
+    E -> · plus T
+    E -> ·
+    F -> · E rp
+    F -> lp · rp
+    F -> ·
+    P -> ·
+    P -> · power P
+    T -> ·
+    T -> · aster P
+    T -> · slash P
+}
+[3]: {
+    E$ -> E ·
+    E -> E · T
+    E -> E · T
+}
+[4]: {
+    P -> F ·
+    P -> F · P
+}
+[5]: {
+    T -> P ·
+}
+[6]: {
+    E -> T ·
+    T -> T · P
+    T -> T · P
+}
+[7]: {
+    E -> E · T
+    E -> E · T
+    F -> lp E ·
+}
+[8]: {
+    E -> E plus ·
+    F -> · E rp
+    F -> ·
+    P -> ·
+    P -> · power P
+    T -> ·
+    T -> · aster P
+    T -> · slash P
+}
+[9]: {
+    E -> E minus ·
+    F -> · E rp
+    F -> ·
+    P -> ·
+    P -> · power P
+    T -> ·
+    T -> · aster P
+    T -> · slash P
+}
+[10]: {
+    F -> · E rp
+    F -> ·
+    P -> ·
+    P -> · power P
+    P -> F power ·
+}
+[11]: {
+    F -> · E rp
+    F -> ·
+    P -> ·
+    P -> · power P
+    T -> T aster ·
+}
+[12]: {
+    F -> · E rp
+    F -> ·
+    P -> ·
+    P -> · power P
+    T -> T slash ·
+}
+[13]: {
+    F -> lp E rp ·
+}
+[14]: {
+    E -> E plus T ·
+    T -> T · P
+    T -> T · P
+}
+[15]: {
+    E -> E minus T ·
+    T -> T · P
+    T -> T · P
+}
+[16]: {
+    P -> F power P ·
+}
+[17]: {
+    T -> T aster P ·
+}
+[18]: {
+    T -> T slash P ·
+}
+
+lookaheads
+[E$ -> ·] = { "$" }
+[E$ -> E ·] = { "$" }
+[E -> · minus T] = { "$" "minus" "plus" "rp" }
+[E -> E · T] = { "$" "minus" "plus" "rp" }
+[E -> E minus ·] = { "$" "minus" "plus" "rp" }
+[E -> E minus T ·] = { "$" "minus" "plus" "rp" }
+[E -> · plus T] = { "$" "minus" "plus" "rp" }
+[E -> E · T] = { "$" "minus" "plus" "rp" }
+[E -> E plus ·] = { "$" "minus" "plus" "rp" }
+[E -> E plus T ·] = { "$" "minus" "plus" "rp" }
+[E -> ·] = { "$" "minus" "plus" "rp" }
+[E -> T ·] = { "$" "minus" "plus" "rp" }
+[F -> · E rp] = { "$" "aster" "minus" "plus" "power" "rp" "slash" }
+[F -> lp · rp] = { "$" "aster" "minus" "plus" "power" "rp" "slash" }
+[F -> lp E ·] = { "$" "aster" "minus" "plus" "power" "rp" "slash" }
+[F -> lp E rp ·] = { "$" "aster" "minus" "plus" "power" "rp" "slash" }
+[F -> ·] = { "$" "aster" "minus" "plus" "power" "rp" "slash" }
+[F -> n ·] = { "$" "aster" "minus" "plus" "power" "rp" "slash" }
+[P -> ·] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[P -> F ·] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[P -> · power P] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[P -> F · P] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[P -> F power ·] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[P -> F power P ·] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[T -> ·] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[T -> P ·] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[T -> · aster P] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[T -> T · P] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[T -> T aster ·] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[T -> T aster P ·] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[T -> · slash P] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[T -> T · P] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[T -> T slash ·] = { "$" "aster" "minus" "plus" "rp" "slash" }
+[T -> T slash P ·] = { "$" "aster" "minus" "plus" "rp" "slash" }
+
+edges
+node[0]:
+  E -> jump<3>
+  F -> jump<4>
+  P -> jump<5>
+  T -> jump<6>
+  lp -> shift<2>
+  n -> shift<1>
+node[1]:
+  $ -> fold5
+  aster -> fold5
+  minus -> fold5
+  plus -> fold5
+  power -> fold5
+  rp -> fold5
+  slash -> fold5
+node[2]:
+  E -> jump<7>
+  F -> jump<4>
+  P -> jump<5>
+  T -> jump<6>
+  lp -> shift<2>
+  n -> shift<1>
+node[3]:
+  $ -> fold0
+  minus -> shift<9>
+  plus -> shift<8>
+node[4]:
+  $ -> fold6
+  aster -> fold6
+  minus -> fold6
+  plus -> fold6
+  power -> shift<10>
+  rp -> fold6
+  slash -> fold6
+node[5]:
+  $ -> fold8
+  aster -> fold8
+  minus -> fold8
+  plus -> fold8
+  rp -> fold8
+  slash -> fold8
+node[6]:
+  $ -> fold3
+  aster -> shift<11>
+  minus -> fold3
+  plus -> fold3
+  rp -> fold3
+  slash -> shift<12>
+node[7]:
+  minus -> shift<9>
+  plus -> shift<8>
+  rp -> shift<13>
+node[8]:
+  F -> jump<4>
+  P -> jump<5>
+  T -> jump<14>
+  lp -> shift<2>
+  n -> shift<1>
+node[9]:
+  F -> jump<4>
+  P -> jump<5>
+  T -> jump<15>
+  lp -> shift<2>
+  n -> shift<1>
+node[10]:
+  F -> jump<4>
+  P -> jump<16>
+  lp -> shift<2>
+  n -> shift<1>
+node[11]:
+  F -> jump<4>
+  P -> jump<17>
+  lp -> shift<2>
+  n -> shift<1>
+node[12]:
+  F -> jump<4>
+  P -> jump<18>
+  lp -> shift<2>
+  n -> shift<1>
+node[13]:
+  $ -> fold4
+  aster -> fold4
+  minus -> fold4
+  plus -> fold4
+  power -> fold4
+  rp -> fold4
+  slash -> fold4
+node[14]:
+  $ -> fold2
+  aster -> shift<11>
+  minus -> fold2
+  plus -> fold2
+  rp -> fold2
+  slash -> shift<12>
+node[15]:
+  $ -> fold1
+  aster -> shift<11>
+  minus -> fold1
+  plus -> fold1
+  rp -> fold1
+  slash -> shift<12>
+node[16]:
+  $ -> fold7
+  aster -> fold7
+  minus -> fold7
+  plus -> fold7
+  rp -> fold7
+  slash -> fold7
+node[17]:
+  $ -> fold9
+  aster -> fold9
+  minus -> fold9
+  plus -> fold9
+  rp -> fold9
+  slash -> fold9
+node[18]:
+  $ -> fold10
+  aster -> fold10
+  minus -> fold10
+  plus -> fold10
+  rp -> fold10
+  slash -> fold10

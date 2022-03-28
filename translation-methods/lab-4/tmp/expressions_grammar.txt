@@ -1,0 +1,34 @@
+@header{
+#include <string>
+#include <cmath>
+}
+
+main = E;
+
+E<int value>
+  -> E plus T {value = $E->value + $T->value;};
+E -> E minus T {value = $E->value - $T->value;};
+E -> T {value = $T->value;};
+
+T<int value>
+  -> T aster P {value = $T->value * $P->value;};
+T -> T slash P {value = $T->value / $P->value;};
+T -> P {value = $P->value;};
+
+P<int value>
+  -> F power P {value = (int) (std::pow((double) $F->value, (double) $P->value) + 0.5); };
+P -> F {value = $F->value;};
+
+F<int value>
+  -> lp E rp {value = $E->value;};
+F -> n {value = std::stoi($n->text);};
+
+f ->     /[ \t\n\r]*[a-zA-Z]+/;
+n ->     /[ \t\n\r]*[0-9]+/ ;
+plus ->  /[ \t\n\r]*\+/  ;
+minus -> /[ \t\n\r]*-/ ;
+power -> /[ \t\n\r]*\*\*/;
+lp ->    /[ \t\n\r]*\(/;
+rp ->    /[ \t\n\r]*\)/;
+aster -> /[ \t\n\r]*\*/ ;
+slash -> /[ \t\n\r]*\//;

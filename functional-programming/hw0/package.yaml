@@ -1,0 +1,44 @@
+name:                hw0
+version:             0.1.0.0
+github:              "td2r/fp-hw0"
+license:             BSD3
+author:              "Naumov Ivan"
+maintainer:          "td2r@niuitmo.ru"
+copyright:           "2021 Naumov Ivan"
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            App category here
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see my github https://github.com/td2r
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+
+executables:
+  hw0-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hw0
+
+tests:
+  hw0-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hw0
