@@ -1,0 +1,29 @@
+@header{
+#include <string>
+}
+
+main = E;
+
+E -> E plus T;
+E -> E minus T;
+E -> T ;
+T -> T aster F;
+T -> T slash F;
+T -> F ;
+F -> f lp A rp;
+F -> lp E rp ;
+F -> n;
+A -> E Ac;
+A -> ;
+Ac -> comma E Ac;
+Ac -> ;
+
+f ->     /[ \t\n\r]*[a-zA-Z]+/;
+n ->     /[ \t\n\r]*[0-9]+/ ;
+plus ->  /[ \t\n\r]*\+/  ;
+minus -> /[ \t\n\r]*\-/ ;
+lp ->    /[ \t\n\r]*\(/;
+rp ->    /[ \t\n\r]*\)/;
+aster -> /[ \t\n\r]*\*/ ;
+slash -> /[ \t\n\r]*\//;
+comma -> /[ \t\n\r]*,/;
