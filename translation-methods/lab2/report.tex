@@ -1,0 +1,289 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc} % если ваш файл содержит русский текст, нужно указать кодировку
+\usepackage[russian]{babel} % для того, чтобы писать русский текст
+\usepackage{amsmath} % для команды equation*
+\usepackage{hyperref} % для вставки ссылок
+\usepackage{graphicx}
+\usepackage{amsfonts}
+\usepackage{dsfont}
+\usepackage{textcomp}
+\usepackage{multicol}
+\usepackage{verbatim}
+\usepackage{makecell}
+\usepackage{amssymb}
+\title{Лабораторная работа №2. Ручное построение нисходящих синтаксических анализаторов}
+\date{15 ноября 2021 г.}
+\author{Наумов Иван M33391 \\ Вариант 1. Арифметические выражения}
+
+%\usepackage{vmargin}
+%\setpapersize{A4}
+%\setmarginsrb{2cm}{1.5cm}{1cm}{1.5cm}{0pt}{0mm}{0pt}{13mm}
+%\usepackage{indentfirst}
+%\sloppy
+\begin{document}
+	\maketitle
+	
+	\section{Разработка грамматики}
+	\subsection*{Изначальная грамматика}
+	
+	\begin{multicols}{2}
+		\begin{align}
+			E & \rightarrow E+T \\
+			E & \rightarrow E-T \\
+			E & \rightarrow T \\
+			T & \rightarrow T*F \\
+			T & \rightarrow T/F \\
+			T & \rightarrow F \\
+			F & \rightarrow f(E) \\
+			F & \rightarrow (E) \\
+			F & \rightarrow -F \\
+			F & \rightarrow n
+		\end{align}
+		
+		\columnbreak
+		
+		\begin{align*}
+			\begin{tabular}{|c|c|}
+				\hline
+				$E$ & Выражение \\
+				\hline
+				$T$ & Слагаемое(Вычитаемое) \\
+				\hline
+				$F$ & Множитель(Делитель) \\
+				\hline
+				$f$ & Функция \\
+				\hline
+				$n$ & Неотриц. число \\
+				\hline
+			\end{tabular}
+		\end{align*}
+	\end{multicols}
+	Правила 1, 2, 4, 5 содержат левую рекурсию, избавимся от нее.
+
+	\newpage
+
+	\begin{multicols}{2}
+		\setcounter{equation}{0}
+		\begin{align}
+			E & \rightarrow TE' \\
+			E' & \rightarrow +TE' \\
+			E' & \rightarrow -TE' \\
+			E' & \rightarrow \varepsilon \\
+			T & \rightarrow FT' \\
+			T' & \rightarrow *FT' \\
+			T' & \rightarrow /FT' \\
+			T' & \rightarrow \varepsilon \\
+			F & \rightarrow f(E) \\
+			F & \rightarrow (E) \\
+			F & \rightarrow -F \\
+			F & \rightarrow n
+		\end{align}
+		
+		\columnbreak
+		
+		\begin{align*}
+			\begin{tabular}{|c|c|}
+				\hline
+				$E$ & Выражение \\
+				\hline
+				$E'$ & Правая часть сложения/вычитания \\
+				\hline
+				$T$ & Слагаемое(Вычитаемое) \\
+				\hline
+				$T'$ & Правая часть умножения/деления \\
+				\hline
+				$F$ & Множитель(Делитель) \\
+				\hline
+				$f$ & Функция \\
+				\hline
+				$n$ & Неотриц. число \\
+				\hline
+			\end{tabular}
+		\end{align*}
+	\end{multicols}
+
+	\section{Построение лексического анализатора}
+	В получившейся грамматике 9 терминалов:
+	\begin{center}
+		\begin{tabular}{|c|c|}
+			\hline
+			Терминал & Токен \\
+			\hline
+			f & FUN \\
+			\hline
+			+ & PLUS \\
+			\hline
+			- & MINUS \\
+			\hline
+			* & ASTER \\
+			\hline
+			/ & SLASH \\
+			\hline
+			( & LPAREN \\
+			\hline
+			) & RPAREN \\
+			\hline
+			n & NUMBER \\
+			\hline
+			\$ & END \\
+			\hline
+		\end{tabular}
+	\end{center}
+	Построим лексический анализотор. Заведем также токен для обозначения ошибки разбора.
+	\subsection*{lexer.h}
+	\verbatiminput{lexer.h}
+	\subsection*{lexer.cpp}
+	\verbatiminput{lexer.cpp}
+	
+	\section{Построение синтаксического анализатора}
+	Построим множества FIRST и FOLLOW для нетерминалов нашей грамматики.
+	\begin{center}
+		\begin{tabular}{|c|c|c|}
+			\hline
+			Нетерминал & FIRST & FOLLOW \\
+			\hline
+			$E$ & ${f, (, -, n}$ & ${\$, )}$ \\
+			\hline
+			$E'$ & ${+, -, \varepsilon}$ & ${\$, )}$ \\
+			\hline
+			$T$ & ${f, (, -, n}$ & ${+, - \$, )}$ \\
+			\hline
+			$T'$ & ${*, /, \varepsilon}$ & ${+, -, \$, )}$ \\
+			\hline
+			$F$ & ${f, (, -, n}$ & ${*, /, +, -, \$, )}$ \\
+			\hline
+		\end{tabular}
+	\end{center}
+	Проверим, что наша грамматика принадлежит классу LL(1):
+	\begin{center}
+		\begin{tabular}{|c|c|c|c|}
+			\hline
+			& $A \rightarrow \alpha$ & $FIRST(\alpha)$ & $FOLLOW[A]$ \\
+			\hline
+			OK & $E \rightarrow TE'$ & (, $-$, $f$, $n$ & \$, ) \\
+			\hline
+			OK &
+			  \makecell{$E' \rightarrow +TE'$ \\ $E' \rightarrow -TE'$ \\ $E' \rightarrow \varepsilon$} &
+			  \makecell{$+$ \\ $-$ \\ $\varepsilon$} &
+			  \$, ) \\
+			\hline
+			OK & $T \rightarrow FT'$ & (, $-$, $f$, $n$ & \$, ), $+$, $-$ \\
+			\hline
+			OK &
+			  \makecell{$T' \rightarrow *FT'$ \\ $T' \rightarrow /FT'$ \\ $T' \rightarrow \varepsilon$} &
+			  \makecell{$*$ \\ $/$ \\ $\varepsilon$} &
+			  \$, ), $+$, $-$ \\
+			\hline
+			OK &
+			  \makecell{$F \rightarrow f(E)$ \\ $F \rightarrow (E)$ \\ $F \rightarrow -F$ \\ $F \rightarrow n$} &
+			  \makecell{$f$ \\ ( \\ $-$ \\ $n$} &
+			  \$, ), $+$, $-$, $*$, $/$ \\
+			\hline
+		\end{tabular}
+	\end{center}
+
+	$\forall A \rightarrow \alpha, A \rightarrow \beta$ \\
+	1) \; $\operatorname{FIRST}(\alpha) \cap\operatorname{FIRST}(\beta) = \varnothing$ \\
+	2) \; $\varepsilon \in \operatorname{FIRST}(\alpha) \implies \operatorname{FIRST}(\beta) \cap \operatorname{FOLLOW}[A] = \varnothing$ \\
+	Составленная грамматика удовлетворяет условию, поэтому является LL(1), соответственно, для нее можно написать нисходящий парсер.
+	
+	\subsection*{parse.cpp}
+	\verbatiminput{parse.cpp}
+	
+	\section{Визуализация дерева разбора}
+	
+	Сгенерированное изображение для дерева разбора выражения $5 * -(2 + 3)$:\\
+	\includegraphics*[scale=0.4]{cmake-build-debug/graph.png}
+	
+	\section*{Модификация: функции произвольного числа аргументов}
+	
+	Модифицируем грамматику:
+	
+	\begin{multicols}{2}
+		\setcounter{equation}{0}
+		\begin{align}
+			E & \rightarrow TE' \\
+			E' & \rightarrow +TE' \\
+			E' & \rightarrow -TE' \\
+			E' & \rightarrow \varepsilon \\
+			T & \rightarrow FT' \\
+			T' & \rightarrow *FT' \\
+			T' & \rightarrow /FT' \\
+			T' & \rightarrow \varepsilon \\
+			F & \rightarrow f(A) \\
+			F & \rightarrow (E) \\
+			F & \rightarrow -F \\
+			F & \rightarrow n \\
+			A & \rightarrow EA' \\
+			A & \rightarrow \varepsilon \\
+			A' & \rightarrow ,EA' \\
+			A' & \rightarrow \varepsilon
+		\end{align}
+		
+		\columnbreak
+		
+		\begin{align*}
+			\begin{tabular}{|c|c|}
+			\hline
+			$E$ & Выражение \\
+			\hline
+			$E'$ & Правая часть сложения/вычитания \\
+			\hline
+			$T$ & Слагаемое(Вычитаемое) \\
+			\hline
+			$T'$ & Правая часть умножения/деления \\
+			\hline
+			$F$ & Множитель(Делитель) \\
+			\hline
+			$A$ & Аргументы функции \\
+			\hline
+			$A'$ & Запятая + остаток аргументов функции \\
+			\hline
+			$f$ & Функция \\
+			\hline
+			$n$ & Неотриц. число \\
+			\hline
+			\end{tabular}
+		\end{align*}
+	\end{multicols}
+	
+	Проверим, что наша грамматика принадлежит классу LL(1):
+	\begin{center}
+		\begin{tabular}{|c|c|c|c|}
+			\hline
+			& $A \rightarrow \alpha$ & $FIRST(\alpha)$ & $FOLLOW[A]$ \\
+			\hline
+			OK & $E \rightarrow TE'$ & ( $-$ $f$ $n$ & \$ ) , \\
+			\hline
+			OK &
+			\makecell{$E' \rightarrow +TE'$ \\ $E' \rightarrow -TE'$ \\ $E' \rightarrow \varepsilon$} &
+			\makecell{$+$ \\ $-$ \\ $\varepsilon$} &
+			\$ ) , \\
+			\hline
+			OK & $T \rightarrow FT'$ & ( $-$ $f$ $n$ & \$ ) $+$ $-$ , \\
+			\hline
+			OK &
+			\makecell{$T' \rightarrow *FT'$ \\ $T' \rightarrow /FT'$ \\ $T' \rightarrow \varepsilon$} &
+			\makecell{$*$ \\ $/$ \\ $\varepsilon$} &
+			\$ ) $+$ $-$ , \\
+			\hline
+			OK &
+			\makecell{$F \rightarrow f(A)$ \\ $F \rightarrow (E)$ \\ $F \rightarrow -F$ \\ $F \rightarrow n$} &
+			\makecell{$f$ \\ ( \\ $-$ \\ $n$} &
+			\$, ) $+$ $-$ $*$ $/$ , \\
+			\hline
+			OK &
+			\makecell{$A \rightarrow EA'$ \\ $A \rightarrow \varepsilon$} &
+			\makecell{( $-$ $f$ $n$ \\ $\varepsilon$} &
+			)  \\
+			\hline
+			OK &
+			\makecell{$A' \rightarrow ,EA'$ \\ $A' \rightarrow \varepsilon$} &
+			\makecell{, \\ $\varepsilon$} &
+			)  \\
+			\hline
+		\end{tabular}
+	\end{center}
+
+\end{document}
