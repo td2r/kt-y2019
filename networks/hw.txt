@@ -1,0 +1,69 @@
+Задание 1
+sudo openvpn --config ~/Downloads/config-linux.ovpn
+Часть 1
+Ввел команду
+sudo ip a add 10.183.83.100/255.255.255.0 dev tap0
+Проверил, что она сработала: ip a show tap0
+==========
+4: tap0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 100
+    link/ether 0e:4b:cf:4c:73:2e brd ff:ff:ff:ff:ff:ff
+    inet 10.183.83.100/24 scope global tap0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::c4b:cfff:fe4c:732e/64 scope link 
+       valid_lft forever preferred_lft forever
+==========
+ping 10.183.83.216 -c 4
+Часть 2
+Во время выполнения части 1 захватил интерфейс tap0 в wireshark, посмотрел mac адрес в arp response. Ответ - 02:a9:12:97:f7:d1
+Часть 3
+Аналогично ч.2
+sudo ip a add fd33:55c8:7c5a:95ea:df31:14e0:ca29:4f05/64 dev tap0
+ping -6 -I tap0 -c 4 fd33:55c8:7c5a:95ea:df31:14e0:ca29:8577
+Часть 4
+Посмотрел mac-адрес отправителя в ответе на ping в wireshark. Ответ - 02:07:95:99:f1:6e
+Часть 5
+Использовал ping -c 1 -s $mtu 10.183.83.216 где бинарил значение mtu (верхняя граница 1500 - mtu для ethernet)
+
+Задание 2
+sudo openvpn --config ~/Downloads/config-linux1.ovpn
+Часть 1
+Сделал запрос к dhcp-серверу: sudo dhclient tap0
+Часть 2
+Посмотрел вывод ip a show:
+===========
+...
+6: tap0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 1000
+    link/ether ca:a8:71:fa:e2:f6 brd ff:ff:ff:ff:ff:ff
+    inet 10.38.107.89/24 brd 10.38.107.255 scope global dynamic tap0
+       valid_lft 119sec preferred_lft 119sec
+...
+===========
+Часть 3
+Посмотрел в wireshark на ICMPv6 пакет с типом  Router Advertisement. В ICMPv6 Option (Prefix Information) с флагом Autonomous address-configuration находится префикс fdca:575a:8744:6877::, соединив который с суффиксом из задания получаем нужный IPv6 адрес
+ping -6 -c 4 fdca:575a:8744:6877:b6:34ff:feb9:7564
+Часть 4
+Сделал запрос к dhcp-серверу: sudo dhclient -6 tap0
+Для получения ip адреса необходимо послать запрос dhcp серверу, который может это отследить. Выдача ip адреса посредством SLAAC происходит самому себе (генерируя псевдослучайное число или беря mac-адрес), поэтому чтобы устройства в сети могли это отследить, нужно заставить пользователя отправить какой-то пакет в эту сеть.
+Часть 5
+В том же пакете из ч.3 был указан и другой префикс, который лежал в ICMPv6 Options без флага Autonomous address-configuration: fdcd:55b8:5857:89f9::/64 - это маска подсети, выданной нам DHCPv6 сервером. Суффикс из задания ::35, значит dns-сервер имеет адрес fdcd:55b8:5857:89f9::35. При помощи утилиты dig спросим его об адресе доменного имени
+~$ dig -6 @fdcd:55b8:5857:89f9::35 55gcviwttbbmq1hd8v04161b.localnetwork AAAA +noall +answer
+55gcviwttbbmq1hd8v04161b.localnetwork. 600 IN AAAA fdca:575a:8744:6877:68:21ff:fe90:e8c
+Часть 6
+Очевидно, браузер не сможет по доменному имени узнать ip адрес, поэтому сделаем это за него (адрес мы знаем из прошлой части): http://[fdca:575a:8744:6877:68:21ff:fe90:e8c]:9229/
+
+Часть 3
+sudo openvpn --config ~/Downloads/config-linux2.ovpn
+Часть 1
+Установил isc-dhcp-server
+Настроил конфигурационный файл
+$ cat /etc/dhcp/dhcpd.conf 
+authoritative;
+
+subnet 10.187.86.0 netmask 255.255.255.0 {
+ range 10.187.86.1 10.187.86.254;
+}
+Соединил dhcp сервер с интерфейсом tap0, указав его в файле /etc/default/isc-dhcp-server
+Перезапустил сервис dhcp сервера
+sudo systemctl restart isc-dhcp-server.service
+Проверил, что он активен
+sudo systemctl status isc-dhcp-server.service

@@ -1,0 +1,205 @@
+Это микро-недоконспект по курсу сетей, выкладывание его на гит не несет никакого смысла, просто жаль все это выкидывать. Не рекомендуется к прочтению.
+
+Лекция1
+11:18 Канальная коммутация (Circuit switching)
+Неэффективна, долго простаивает канал. Поэтому переходим к пакетной коммутации. Возникают проблемы.
+- Пакет может не дойти
+- Пакет может гулять по кругу (сделать timeout)
+- Пакет может побиться
+Conjestion control: постепенно повышаем скорость передачи, пока пакеты не теряются. Таким образом делим самый узкий канал поровну.
+
+Лекция2
+[00:00-30:00]
+IPv4 and IPv6, различные виды записи IPv6
+IP Network (подсети). Запись через /, запись через маску и wildcard. Два запрещенных адреса в подсети: min (иногда все же используется) и max (он же broadcast, никогда не используется). В сетях /31 и /32 используются все адреса.
+Rounting (на самом деле forwarding, но термины перегружены, поэтому похуй). Таблица адресации имеет вид network via(dev) ip(device). В таблице ip пакета перенаправляется по такому правилу, в котором этот ip совпадает по наибольшему числу битов подсети.
+How to get IP address. Nikak.
+[30:00 - 1:00:00]
+IPv6 allocation.
+* 2000::/3
+* /48 minimum size
+Special IP Addresses:
+* Loopback
+ - 127.0.0.1/8
+ - ::1/128
+* Nonexistent (иногда означают "любой адрес")
+ - 0.0.0.0/8
+ - ::/128
+Special IP addresses (for private networks)
+* 192.168.0.0/16
+* 172.16.0.0/12
+* 10.0.0.0/8
+* 100.64.0.0./10
+* fd00::/8
+NAT (Network address translation) ~55min
+Серый IP - в локальной сети
+Белый IP - в глобальной сети
+Если компьютер во внутренней сети отправляет пакет на 8.8.8.8 и ждет от него ответа, NAT-сервер подменит source address на свой "белый" IP. Возникает проблема в понимании того, кому вернуть отправленный в ответ с 8.8.8.8 пакет. Для этого NAT-сервер хранит таблицу с ключом <src ip, src port, dest ip, dest port, tcp/udp>, чтобы восстановить устройство, с которого был отправлен пакет-запрос.
+tracert fb.com - показывает промежуточные IP адреса, через которые прошел пакет
+Special IP addresses 1h 5min
+* 87.250.250.0/23
+  87.250.251.255 - Direct broadcast (на все устройства в подсети, используется только компьютерами в той же самой сети)
+* 255.255.255.255/32
+  Local network broadcast
+Special IP addresses (Multicast) 1h 8min
+* 224.0.0.0/4
+  224.0.0.1 - all systems on this subnet
+IP packet ~1h 10min
+IPv4:
+Version - версия (4), 4 бита
+IHL - Internet Header Length (сколько 32-битных слов в заголовке).
+Type of Service - насколько пакет "важный", в каждой подсети свои обозначения.
+Total Length - длина всего пакета (включая заголовок) 16 бит.
+Identification - {only if MF is true} обозначает, частью какого большого пакета является этот пакет.
+Flag MF - More Fragments, если 1, то этот пакет - часть большого пакета.
+Flag DF - Don't Fragment, не разбивать пакет.
+Fragment Offset - {only if MF is true} сдвиг относительно начала большого пакета.
+TTL - время жизни пакета (число промежуточных узлов/секунды в очереди).
+Protocol.
+Header Checksum.
+Source Address.
+Destination Address.
+Options - 
+Padding - если Options короткий добьем до конца 0.
+
+Максимальный размер IPv4 пакета, который точно будет обработан, 768 байт (включая заголовок)
+
+IPv6:
+Version - версия (6)
+Traffic Class - см. Type of Service в IPv4.
+Flow Label - метка потока.
+Payload Length - длина пакета (исключая заголовки) 16 бит.
+Next Header - TCP/UPD/IP extension/FRG/etc (какой заголовок идет следующим).
+HOP Limit - см. TTL в IPv4.
+Source Address.
+Destination Address.
+
+Максимальный размер IPv6 пакета, который точно будет обработан, 1280 байт
+
+Максимальный размер IP пакета ~65kb. Средний размер IP-пакета 1506 байт (ограничение wifi/витой пары).
+Расширение Jumbograms (IPv6) позволяет сделать размер IP-пакета неограниченным, но используется очень редко.
+MTU (Maximum Transfer Unit) - максимальный размер пакета, который может передать ваша сеть.
+
+Лекция3
+ICMP - Internet Control Missage Protocol
+NAT64 [18min]
+whois
+tcpdump
+wireshark
+Ethernet & WiFi
+Ethernet устройства
+MAC-48
+ARP (Address Resolution Protocol)
+ND (Neightbor Discovery Protocol)
+DHCP
+
+Лекция4
+UDP (User Datagram Protocol)
+s = socket()
+bind(s, 53)
+sockaddr{IP, port}
+sendto(s, data, dst)
+recvfrom(s *data, *src)
+
+UDP datagram
+32 bits
+source port
+dest port
+length - length in bytes of UDP segment including header
+checksum - для всей датаграмы, а не только для заголовка (как в IP)
+application data (payload)
+
+Порт - число 1..65535, первые 1024 используются ОС
+
+netcat (nc) - позволяет слушать и отправлять UDP пакеты
+$[1] netcat -l -u -p 12345
+$[2] netcat -u 127.0.0.1 12345
+Hello
+
+TFTP (протокол, работающий поверх UDP и позволяющий передать большие данные небольшими кусками)
+Проблемы:
+1. Хорошо работает, только если задержка между сервером и клиентом маленькая
+2. Пакет может потеряться
+3. Сервер может прислать два пакета №1. Тогда клиент будет собирать две копии данных (Sorcerer's Apprentice Syndrome)
+
+TCP (Transmission Control Protocol)
+#Server
+s = socket()
+bind(s, 80)
+s2 = accept(s)
+read(s2)
+write(s2)
+#Client
+s = socket()
+connect(s, addr)
+read(s)
+write(s)
+
+IANA well known ports TCP:
+80 browser
+53 DNS
+
+TCP slow start (выбор TCP окна)
+RTT - round-trip time
+
+Что, если пакет потерялся?
+Fast Retransmit:
+Предположим клиент получил пакет 1 и 3. Тогда он отсылает ACK1, после чего сервер отсылает только пакет 2. Если клиент получит его, то отправит ACK3
+Selective acknowledgements:
+Можно в options указывать, что я получил префикс x, но не получил отрезок [y, z] (y < x, z < x). Редко используется
+
+Алгоритм выбора ширины окна TCP:
+AIMD (addictive increase, multiplicative decrease)
+ok:     cwnd += 1
+not ok: cwnd /= 2
+
+BIC
+Очень похож на AIMD, но сначала увеличиваем окно быстро, а потом медленно
+
+CUBIC
+Как BIC, но если мы вылезли за W_max, то начинаем увеличивать окно по кубической параболе
+
+BBR ("Bottleneck Bandwidth and Round-trip propagation time")
+Ищем окно, не теряя пакеты. Если после увеличения окна, время пакетов в очереди сильно увеличилось, значит мы подошли к оптимальной границе, нужно отойти чуть-чуть назад. Хорошо себя показывает, но ведет себя "нечестно" по отношению к CUBIC
+
+Explicit Congestion Notification
+Флаги ECE (Explicit Congestion Enabled), EC (Explicit Congestion), CWR (Congestion Window Reduce)
+
+Бывает "затык" другого рода - данные приходят так быстро, что приложение не успевает их обработать.
+
+TCP 3-way handshake
+SYN flag - запрос на установку TCP соединения
+Нельзя просто слать данные в первом же запросе, иначе можно легко сломать сервер, рассылая такие пакеты с разных адресов. Поэтому сначала отправляем пакет с SYN флагом и свой offset для данных. После этого сервер посылает SYN-ACK и просит нумеровать данные не с 0, а с определенной позиции (случайно выбранной сервером), проверяя, что мы выделили какие-то ресурсы для установки соединения.
+SYN-flood
+Если мы однажды устанавливали TCP-соединение с клиентом, то мы выдаем ему SYN-cookie. Клиент может приложить ее в следущем SYN, и сразу начать слать данные.
+Перед закрытием соединения отправляется пакет с флагом FIN. К сожалению сервер может вылететь и не отослать такой пакет, просто оборвав соединение.
+Флаг URG (urgent, канал со служебной информацией)
+Флаг PSH (push, отдать приложению данные сейчас)
+Sequence number всего 32 байта, может переполняться при передаче ГБит в сек.
+
+Лекция5 (Routing)
+RIP (Routing Information Protocol) Всего 3 бита под расстояние
+OSPF (Open Shortest Path First) Строит карту сети и запускает Дейкстру
+IS-IS
+BGP (Autonomic Systems)
+
+Лекция6
+Peering (link между RINET и GOOGLE)
+InternetExchange
+
+Лекция7
+DNS (Domain Name System)
+site name -> IP
+IDN (Internationalized Domain Name)
+idn (program)
+/etc/hosts (C:\Windows\Sytem32)
+Resource Records
+Root DNS servers (www.iana.org/domains/root/servers)
+dig и nslookup (programs) (dig vk.com)
+A AAAA SOA NS TXT MX
+EDNS(0) - Client Subnet
+DNSSEC
+
+Лекция8
+HTTP (hypertext transfer protocol)
+URI (Uniform resourse identifier)
