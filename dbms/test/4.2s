@@ -1,0 +1,7 @@
+select TeamId, count(Letter) as Solved
+from (
+  select distinct TeamId, ContestId, Letter
+  from Runs natural join Sessions
+  where Accepted = 1
+) name
+group by TeamId;

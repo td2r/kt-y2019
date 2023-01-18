@@ -1,0 +1,338 @@
+1.1 FreeSeats
+START TRANSACTION READ ONLY ISOLATION LEVEL READ COMMITTED;
+-- Фантомная запись: допустимо,
+--  каждая таблица обходится один раз
+-- Неповторяемое чтение: допустимо,
+--  каждое чтение производится один раз
+-- Грязное чтение: не допустимо,
+--  должны быть отображены только зафиксированные значения
+
+1.2 Reserve
+START TRANSACTION READ WRITE ISOLATION LEVEL READ COMMITTED;
+-- Чтение происходит один раз и из одной таблицы. После удаления просреченных броней
+-- в таблице будет находиться только актуальная бронь на данное место, поэтому
+-- в зависимости от ее наличия вставка отработает корректно или завершится ошибкой.
+
+1.3 ExtendReservation
+START TRANSACTION READ WRITE ISOLATION LEVEL READ COMMITTED;
+-- Значение времени обновляется за одно чтение из одной таблицы. Все что требуется -
+-- найти в таблице корректную бронь. Даже если два потока одновременно будут
+-- ее продлевать, для каждого из них результат будет выглядеть так, как будто
+-- каждый корректно исполнил продление
+
+1.4 BuyFree
+START TRANSACTION READ WRITE ISOLATION LEVEL READ COMMITTED;
+-- Аналогично Reserve, та же самая вставка с другим флагом и временем окончания брони.
+
+1.5 BuyReserved
+START TRANSACTION READ WRITE ISOLATION LEVEL READ COMMITTED;
+-- Аналогично ExtendReservation, такое же обновление, только другими значениями
+
+1.6 FlightsStatistics
+START TRANSACTION READ ONLY ISOLATION LEVEL REPEATABLE READ;
+-- Нужен уровень изоляции не ниже RC, поскольку мы все же хотим точную статистику.
+-- Нам точно не нужен serializable/snapshot, т.к. мы ничего не пишем. Однако нам
+-- все же потребуется RR во избежание неповторяемых чтений во время соединения таблиц.
+
+1.7 FlightStat
+START TRANSACTION READ ONLY ISOLATION LEVEL REPEATABLE READ;
+-- Аналогично FlightsStatistics. Добавляется только доп. ограничение на WHERE в SELECT
+
+1.8 CompressSeats
+START TRANSACTION READ ONLY ISOLATION LEVEL SNAPSHOT;
+-- Фантомная запись вызывает проблемы, поскольку пользователь может купить место,
+-- на которое мы перемещаем другое купленное место.
+-- Косые записи не возникнут, поскольку каждое сидение перемещается поочередно без нарушения инвариантов
+
+2.0 Общий план
+Получить из базы данных информацию о списке свободных мест.
+Отдать ее внешней части нашего приложения.
+Получить от нее какой-то запрос на действие с местом.
+Попытаться его исполнить и уведомить пользователя о результате выполнения операции.
+
+2.1. Запрос списка свободных мест 
+CREATE OR REPLACE FUNCTION FreeSeats(FlightId INTEGER)
+RETURNS TABLE(SeatNo VARCHAR(4)) LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    CurrentTime TIMESTAMP;
+    FlightId_ ALIAS FOR $1;
+BEGIN
+    CurrentTime = NOW()::TIMESTAMP;
+    IF CurrentTime > (SELECT FlightTime FROM Flights WHERE Flights.FlightId = FlightId_) THEN
+        RETURN;
+    END IF;
+    RETURN QUERY
+        SELECT Seats.SeatNo
+        FROM Seats
+        WHERE PlaneId = (SELECT PlaneId FROM Flights WHERE Flights.FlightId = FlightId_)
+        EXCEPT
+        SELECT Booking.SeatNo
+        FROM Booking
+        WHERE Booking.FlightId = FlightId_ AND
+              (IsBought OR ReservedUntil > CurrentTime);
+END;
+$$;
+
+START TRANSACTION READ ONLY ISOLATION LEVEL READ COMMITTED;
+SELECT * FROM FreeSeats(FlightId_)
+COMMIT;
+
+2.2 Взаимодействие с пользователем
+Получить от пользователя действие и дополнительные аргументы.
+В зависимости от типа действия вызвать функцию Reserve, ExtendReservation, BuyFree или BuyReserved.
+Каждая из этих функций возвращает булевское значение об успехе ее выполнения.
+В зависимости от этого значения необходимо показать сообщение об успехе или перенаправить на страницу свободных сидений с соответствующим оповещением.
+
+2.3. Действия с местом
+CREATE OR REPLACE FUNCTION ValidateUser(UserId INTEGER, Pass VARCHAR(256))
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    PassHash VARCHAR(64);
+BEGIN
+    PassHash = (
+        SELECT Users.Pass
+        FROM Users
+        WHERE Users.UserId = ValidateUser.UserId
+    );
+    RETURN CRYPT(Pass, PassHash) = PassHash;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION ValidateFlightAndSeat(FlightId INTEGER, SeatNo VARCHAR(4))
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    FlightId_ ALIAS FOR $1;
+    SeatNo_ ALIAS FOR $2;
+BEGIN
+    RETURN EXISTS(
+        SELECT *
+        FROM Seats
+        WHERE PlaneId = (
+                SELECT PlaneId
+                FROM Flights
+                WHERE Flights.FlightId = FlightId_ AND FlightTime > NOW()
+            ) AND Seats.SeatNo = SeatNo_
+    );
+END;
+$$;
+
+-- Not bought and not reserved
+CREATE OR REPLACE FUNCTION ValidateSeatFree(FlightId INTEGER, SeatNo VARCHAR(4))
+    RETURNS BOOLEAN
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    FlightId_ ALIAS FOR $1;
+    SeatNo_ ALIAS FOR $2;
+BEGIN
+    RETURN NOT EXISTS(
+        SELECT *
+        FROM Booking
+        WHERE Booking.FlightId = FlightId_ AND
+              Booking.SeatNo = SeatNo_ AND
+              (IsBought OR ReservedUntil > NOW())
+    );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION ValidateSeatExistsAndFree(FlightId INTEGER, SeatNo VARCHAR(4))
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS
+$$
+DECLARE
+BEGIN
+    RETURN ValidateFlightAndSeat(FlightId, SeatNo) AND
+           ValidateSeatFree(FlightId, SeatNo);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION ValidateReservedBy(FlightId INTEGER,
+                                              SeatNo VARCHAR(4),
+                                              UserId INTEGER)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    FlightId_ ALIAS FOR $1;
+    SeatNo_ ALIAS FOR $2;
+    UserId_ ALIAS FOR $3;
+BEGIN
+    RETURN EXISTS(
+        SELECT *
+        FROM Booking
+        WHERE Booking.FlightId = FlightId_ AND
+              Booking.SeatNo = SeatNo_ AND
+              Booking.UserId = UserId_ AND
+              NOT IsBought AND
+              NOW() < ReservedUntil
+    );
+END;
+$$;
+
+CREATE OR REPLACE PROCEDURE DeleteExpiredReservation(FlightId INTEGER, SeatNo VARCHAR(4))
+LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    FlightId_ ALIAS FOR $1;
+    SeatNo_ ALIAS FOR $2;
+BEGIN
+    DELETE FROM Booking
+    WHERE Booking.FlightId = FlightId_ AND
+          Booking.SeatNo = SeatNo_ AND
+          NOT IsBought AND
+          ReservedUntil < NOW();
+END;
+$$;
+
+CREATE OR REPLACE PROCEDURE DeleteAllExpiredReservation()
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+    DELETE FROM Booking
+    WHERE NOT IsBought AND ReservedUntil < NOW();
+END;
+$$;
+
+CREATE OR REPLACE VIEW FlightStats AS
+SELECT UserId,
+       FlightId,
+       COUNT(*) - COUNT(IsBought) > 0 AS CanReserve,
+       COUNT(*) - COUNT(IsBought) +
+           COUNT(CASE WHEN NOT IsBought AND Booking.UserId = Users.UserId THEN 1 END) > 0 AS CanBuy,
+       (COUNT(*) - COUNT(IsBought))::INTEGER AS Free,
+       COUNT(CASE WHEN NOT IsBought THEN 1 END)::INTEGER AS Reserved,
+       COUNT(CASE WHEN IsBought THEN 1 END)::INTEGER AS Bought
+FROM Flights CROSS JOIN Users NATURAL JOIN Seats NATURAL LEFT JOIN Booking
+GROUP BY UserId, FlightId;
+
+CREATE OR REPLACE FUNCTION Reserve(UserId INTEGER, Pass VARCHAR(256), FlightId INTEGER, SeatNo VARCHAR(4))
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+    IF NOT (ValidateUser(UserId, Pass) AND ValidateSeatExistsAndFree(FlightId, SeatNo))
+    THEN
+        RETURN FALSE;
+    END IF;
+    CALL DeleteExpiredReservation(FlightId, SeatNo);
+    INSERT INTO Booking (FlightId, SeatNo, UserId, IsBought, ReservedUntil)
+        VALUES (FlightId, SeatNo, UserId, FALSE, NOW() + INTERVAL '3 day');
+    RETURN TRUE;
+    EXCEPTION
+        WHEN sqlstate '23505' THEN -- Someone reserved before us
+        RETURN FALSE;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION ExtendReservation(UserId INTEGER,
+                                             Pass VARCHAR(256),
+                                             FlightId INTEGER,
+                                             SeatNo VARCHAR(4))
+RETURNS BOOLEAN
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    UserId_ ALIAS FOR $1;
+    Pass_ ALIAS FOR $2;
+    FlightId_ ALIAS FOR $3;
+    SeatNo_ ALIAS FOR $4;
+BEGIN
+    IF NOT (ValidateUser(UserId_, Pass_))
+    THEN
+        RETURN FALSE;
+    END IF;
+    UPDATE Booking
+    SET ReservedUntil = NOW() + INTERVAL '3 day'
+    WHERE Booking.FlightId = FlightId_ AND
+            Booking.SeatNo = SeatNo_ AND
+          NOT IsBought AND
+          ReservedUntil > NOW();
+    RETURN FOUND;
+END;
+$$;
+
+DELETE FROM Booking WHERE (FlightId = 1 AND SeatNo = '001B');
+INSERT INTO Booking (FlightId, SeatNo, UserId, IsBought, ReservedUntil)
+VALUES (1, '001B', 11, FALSE, CAST('November 15, 2022 10:00:00' AS TIMESTAMP));
+
+SELECT ExtendReservation(11, 'abc', 1, '001B');
+
+CREATE OR REPLACE FUNCTION BuyFree(FlightId INTEGER, SeatNo VARCHAR(4))
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    FlightId_ ALIAS FOR $1;
+    SeatNo_ ALIAS FOR $2;
+BEGIN
+    IF NOT ValidateSeatExistsAndFree(FlightId_, SeatNo_) THEN
+        RETURN FALSE;
+    END IF;
+    CALL DeleteExpiredReservation(FlightId_, SeatNo_);
+    INSERT INTO Booking (FlightId, SeatNo, UserId, IsBought, ReservedUntil)
+        VALUES (FlightId_, SeatNo_, NULL, TRUE, NULL);
+    RETURN TRUE;
+EXCEPTION
+    WHEN sqlstate '23505' THEN -- Someone bought before us
+    RETURN FALSE;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION BuyReserved(UserId INTEGER, Pass VARCHAR(256), FlightId INTEGER, SeatNo VARCHAR(4))
+    RETURNS BOOLEAN
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    UserId_ ALIAS FOR $1;
+    Pass_ ALIAS FOR $2;
+    FlightId_ ALIAS FOR $3;
+    SeatNo_ ALIAS FOR $4;
+BEGIN
+    IF NOT ValidateUser(UserId_, Pass_) THEN
+        RETURN FALSE;
+    END IF;
+    UPDATE Booking
+    SET IsBought = TRUE,
+        ReservedUntil = NULL
+    WHERE Booking.FlightId = FlightId_ AND
+          Booking.SeatNo = SeatNo_ AND
+          NOT IsBought AND
+          ReservedUntil > NOW();
+    RETURN FOUND;
+END;
+$$;
+
+-------------------------- Примеры обработки запросов пользователя ----------------
+
+START TRANSACTION READ WRITE ISOLATION LEVEL READ COMMITTED;
+SELECT * FROM Reserve(1, 'qwerty123', 1, '010F');
+COMMIT;
+
+START TRANSACTION READ WRITE ISOLATION LEVEL READ COMMITTED;
+SELECT * FROM BuyFree(1, '002A');
+COMMIT;
+
+START TRANSACTION READ WRITE ISOLATION LEVEL READ COMMITTED;
+SELECT * FROM ExtendReservation(1, 'qwerty123', 1, '010F');
+COMMIT;
+
+START TRANSACTION READ WRITE ISOLATION LEVEL READ COMMITTED;
+SELECT * FROM BuyReserved(1, 'qwerty123', 1, '010F');
+COMMIT;

@@ -1,0 +1,6 @@
+  SELECT DISTINCT StudentId, StudentName, GroupName
+  FROM Students, Groups, Plan
+  WHERE Students.GroupId = Groups.GroupId AND
+    Plan.GroupId = Groups.GroupId AND
+    CourseId = :CourseId AND
+    StudentId NOT IN (SELECT DISTINCT StudentId FROM Marks WHERE CourseId = :CourseId);

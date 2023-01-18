@@ -1,0 +1,7 @@
+  SELECT GroupName, AVG(CAST(AvgMark AS FLOAT)) AS AvgAvgMark
+  FROM Groups g LEFT JOIN (
+    SELECT StudentId, GroupId, AVG(CAST(Mark AS FLOAT)) AS AvgMark
+    FROM Students NATURAL JOIN Marks
+    GROUP BY StudentId, GroupId
+  ) SEL1 ON g.GroupId = SEL1.GroupId
+  GROUP BY g.GroupId, GroupName;

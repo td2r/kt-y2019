@@ -1,0 +1,1 @@
+proj{StudentId}(sigma{LecturerName=:LecturerName}(Students nj Plan nj Lecturers)) ∖ proj{StudentId}(proj{StudentId, CourseId}(sigma{LecturerName=:LecturerName}(Students nj Plan nj Lecturers)) ∖ proj{StudentId, CourseId}(Marks))

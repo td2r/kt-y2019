@@ -1,0 +1,13 @@
+  SELECT DISTINCT StudentId
+  FROM Students NATURAL JOIN Plan NATURAL JOIN Lecturers
+  WHERE LecturerName=:LecturerName
+  EXCEPT
+  SELECT DISTINCT StudentId
+  FROM (
+    SELECT DISTINCT StudentId, CourseId
+    FROM Students NATURAL JOIN Plan NATURAL JOIN Lecturers
+    WHERE LecturerName=:LecturerName
+    EXCEPT
+    SELECT DISTINCT StudentId, CourseId
+    FROM Marks
+  ) SEL1;

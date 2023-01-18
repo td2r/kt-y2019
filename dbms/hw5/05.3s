@@ -1,0 +1,9 @@
+  SELECT StudentName, CourseName
+  FROM (
+    SELECT DISTINCT StudentId, CourseId
+    FROM Students NATURAL JOIN Plan
+    EXCEPT
+    SELECT DISTINCT StudentId, CourseId
+    FROM Students NATURAL JOIN Marks
+    WHERE Mark > 3
+  ) S1 NATURAL JOIN Students NATURAL JOIN Courses

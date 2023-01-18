@@ -1,0 +1,17 @@
+  SELECT DISTINCT StudentId
+  FROM Marks
+  EXCEPT
+  SELECT DISTINCT StudentId
+  FROM (
+    SELECT * FROM (
+      SELECT DISTINCT StudentId
+      FROM Marks
+    ) QprojX CROSS JOIN (
+      SELECT DISTINCT CourseId
+      FROM Lecturers NATURAL JOIN Plan
+      WHERE LecturerName=:LecturerName
+    ) S
+    EXCEPT
+    SELECT DISTINCT StudentId, CourseId
+    FROM Marks
+  ) S1;

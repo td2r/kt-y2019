@@ -1,0 +1,11 @@
+update Runs
+set Accepted = 1
+where SubmitTime = (
+  select SubmitTime
+  from (
+    select SessionId, MAX(SubmitTime) as SubmitTime
+    from Runs
+    group by SessionId
+  ) name
+  where SessionId = name.SessionId
+);

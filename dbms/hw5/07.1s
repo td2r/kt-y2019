@@ -1,0 +1,29 @@
+  SELECT *
+  FROM (
+    SELECT DISTINCT CourseId
+    FROM Marks
+  ) SEL1 CROSS JOIN (
+    SELECT DISTINCT GroupId
+    FROM Students
+  ) SEL2
+  EXCEPT
+  SELECT DISTINCT CourseId, GroupId
+  FROM (
+    SELECT DISTINCT StudentId, CourseId, GroupId
+    FROM (
+      SELECT DISTINCT CourseId
+      FROM Marks
+    ) SEL3 CROSS JOIN (
+      SELECT DISTINCT StudentId, GroupId
+      FROM Students
+    ) SEL4
+    EXCEPT
+    SELECT DISTINCT StudentId, CourseId, GroupId
+    FROM (
+      SELECT DISTINCT StudentId, CourseId
+      FROM Marks
+    ) SEL5 NATURAL JOIN (
+      SELECT DISTINCT StudentId, GroupId
+      FROM Students
+    ) SEL6
+  ) SEL7;

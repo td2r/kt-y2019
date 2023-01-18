@@ -1,0 +1,8 @@
+  Passed(StudentId, CourseId) :-
+    Marks(StudentId, CourseId, Mark),
+    Mark > 2.
+  Result(StudentName, CourseName) :-
+    Plan(GroupId, CourseId, _),
+    Students(StudentId, StudentName, GroupId),
+    not Passed(StudentId, CourseId),
+    Courses(CourseId, CourseName).

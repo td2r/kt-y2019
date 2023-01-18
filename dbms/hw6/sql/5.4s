@@ -1,0 +1,15 @@
+  SELECT StudentId
+  FROM Students
+  WHERE StudentId NOT IN (
+    SELECT StudentId
+    FROM Students s, Plan, Lecturers
+    WHERE Plan.GroupId = s.GroupId AND
+      Plan.LecturerId = Lecturers.LecturerId AND
+      LecturerName = :LecturerName AND
+      NOT EXISTS (
+        SELECT *
+        FROM Marks
+        WHERE Marks.StudentId = s.StudentId AND
+          Marks.CourseId = Plan.CourseId
+      )
+  );

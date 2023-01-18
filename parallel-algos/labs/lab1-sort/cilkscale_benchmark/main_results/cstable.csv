@@ -1,0 +1,3 @@
+tag,work (seconds),span (seconds),parallelism,burdened_span (seconds),burdened_parallelism,1c time (seconds),2c time (seconds),3c time (seconds),4c time (seconds)
+parallel_sort,163.915,11.7952,13.8968,11.7968,13.8948,61.9647,34.9345,27.6434,24.128
+,165.574,13.4544,12.3063,13.4561,12.3048,63.2774,36.4626,28.9854,25.4198

@@ -1,0 +1,10 @@
+select TeamName
+from Teams
+where exists (
+  select distinct ContestId
+  from Contests
+  except
+  select distinct ContestId
+  from Sessions natural join Runs
+  where TeamId = Teams.TeamId and Accepted = 1
+);

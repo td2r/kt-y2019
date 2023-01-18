@@ -1,0 +1,1 @@
+proj{StudentId, StudentName, GroupId}(Students natural-join sigma{Mark=:Mark}(Marks) natural-join sigma{CourseName=:CourseName}(Courses))

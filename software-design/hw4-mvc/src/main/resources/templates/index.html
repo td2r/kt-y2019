@@ -1,0 +1,61 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<head>
+    <title>Tasklist</title>
+</head>
+<style>
+    #tasklist-table {
+        border-style: dotted;
+    }
+    #tasklist-table, td {
+        min-width: 50px;
+        text-align: center;
+        align-items: center;
+        justify-content:center;
+    }
+    #delete-tasklist-button {
+        margin-bottom: 2em;
+    }
+</style>
+<body>
+
+<th:block th:each="tasklist : ${tasklists}">
+    <h4 th:text="${tasklist.key}"></h4>
+    <form method="POST" action="/add-task">
+        <label>Add new task:</label>
+        <input type="text" name="name" placeholder="Type name of new task"/>
+        <input type="hidden" name="tasklistName" th:value="${tasklist.key}">
+        <input type="submit" value="Create task">
+    </form>
+    <table id="tasklist-table">
+        <th:block th:each="task : ${tasklist.value}">
+            <tr>
+                <td th:text="${task.getId()}"/>
+                <td th:text="${task.getName()}"/>
+                <td th:if="${task.isFinished()}" style="background-color:lightgreen"></td>
+                <td th:unless="${task.isFinished()}">
+                    <form method="POST" action="/finish-task" style="margin: 0; text-align: center">
+                        <input type="hidden" name="taskId" th:value="${task.getId()}">
+                        <input type="submit" value="Finish task">
+                    </form>
+                </td>
+            </tr>
+        </th:block>
+    </table>
+    <form method="POST" action="/delete-tasklist" id="delete-tasklist-button">
+        <input type="hidden" name="tasklistName" th:value="${tasklist.key}">
+        <input type="submit" value="Delete this task list">
+    </form>
+    <hr>
+</th:block>
+
+<h3>Add new task list</h3>
+<form method="POST" action="/add-tasklist">
+    <label>Name:</label>
+    <input type="text" name="tasklistName" placeholder="type task list name here..."/>
+
+    <input type="submit" value="Add task list">
+</form>
+
+</body>
+</html>

@@ -1,0 +1,7 @@
+UPDATE Students
+SET Marks = (
+  SELECT COUNT(CourseId)
+  FROM Marks
+  WHERE Marks.StudentId = Students.StudentId
+)
+WHERE StudentId = :StudentId;

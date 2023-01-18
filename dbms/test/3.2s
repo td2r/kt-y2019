@@ -1,0 +1,2 @@
+delete from Runs
+where :TeamName = (select TeamName from Teams where TeamId = (select TeamId from Sessions where SessionId = Runs.SessionId));

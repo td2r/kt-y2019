@@ -1,0 +1,9 @@
+insert into Sessions (TeamId, ContestId, Start)
+  select TeamId, :ContestId, current_timestamp from (
+    select distinct TeamId
+    from Teams
+    except
+    select distinct TeamId
+    from Sessions
+    where ContestId = :ContestId
+  ) name;

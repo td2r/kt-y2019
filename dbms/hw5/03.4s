@@ -1,0 +1,3 @@
+  SELECT StudentId, StudentName, GroupId
+  FROM Students natural join Plan natural join Marks natural join Lecturers
+  WHERE Mark=:Mark and LecturerName=:LecturerName;
