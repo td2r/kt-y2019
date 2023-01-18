@@ -1,0 +1,79 @@
+-- postgresql 14
+
+CREATE FUNCTION NoExtraMarksPrecondition()
+RETURNS VOID
+LANGUAGE plpgsql AS
+    $$DECLARE
+        extraMark RECORD;
+    BEGIN
+        FOR extraMark IN
+            SELECT StudentId, CourseId
+            FROM Marks
+            WHERE CourseId NOT IN (
+                SELECT CourseId
+                FROM Plan
+                WHERE Plan.GroupId = (
+                    SELECT GroupId
+                    FROM Students
+                    WHERE Students.StudentId = Marks.StudentId
+                )
+            )
+        LOOP
+            RAISE EXCEPTION
+                'Student (%) has mark on course (%) not from his plan',
+                extraMark.StudentId,
+                extraMark.CourseId;
+        END LOOP;
+    END;$$;
+
+CREATE FUNCTION triggerMarkModification()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$BEGIN
+    IF (NEW.CourseId NOT IN (
+        SELECT CourseId
+        FROM Plan
+        WHERE GroupId = (
+            SELECT GroupId
+            FROM Students
+            WHERE Students.StudentId = NEW.StudentId
+        )
+    )) THEN
+       RAISE EXCEPTION
+           'Insert mark of student (id=%) for course (id=%) not in his plan',
+           NEW.StudentId,
+           NEW.CourseId;
+    ELSE
+        RETURN NEW;
+    END IF;
+END$$;
+
+CREATE TRIGGER onInsertMark
+    BEFORE INSERT OR UPDATE
+    OF StudentId, CourseId
+    ON Marks
+    FOR EACH ROW
+    EXECUTE FUNCTION triggerMarkModification();
+
+CREATE FUNCTION triggerPlanRemove()
+    RETURNS TRIGGER
+    LANGUAGE plpgsql
+AS $$BEGIN
+    IF (EXISTS (SELECT * FROM Marks WHERE CourseId = OLD.CourseId)) THEN
+        RAISE EXCEPTION
+            'Deleting course (id=%) which students have marks for',
+            OLD.CourseId;
+    ELSE
+        RETURN NEW;
+    END IF;
+END$$;
+
+CREATE TRIGGER onDeletingCourse
+    BEFORE DELETE
+    ON Plan
+    FOR EACH ROW
+    EXECUTE FUNCTION triggerPlanRemove();
+
+DO $$BEGIN
+    PERFORM NoExtraMarksPrecondition();
+END$$;

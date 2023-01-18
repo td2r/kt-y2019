@@ -1,0 +1,13 @@
+  SELECT GroupName, CourseName
+  FROM Groups, Courses
+  WHERE NOT EXISTS (
+    SELECT *
+    FROM Students
+    WHERE Students.GroupId = Groups.GroupId AND
+      NOT EXISTS (
+        SELECT *
+        FROM Marks
+        WHERE Marks.StudentId = Students.StudentId AND
+          Marks.CourseId = Courses.CourseId
+      )
+  );

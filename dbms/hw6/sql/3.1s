@@ -1,0 +1,6 @@
+  SELECT DISTINCT StudentId, CourseId
+  FROM Students, Plan
+  WHERE Students.GroupId = Plan.GroupId
+  UNION
+  SELECT DISTINCT StudentId, CourseId
+  FROM Marks;

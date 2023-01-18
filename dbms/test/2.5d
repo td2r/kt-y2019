@@ -1,0 +1,10 @@
+TeamSolvedTask(TeamId, ContestId, Letter) :-
+  Sessions(SessionId, TeamId, ContestId, _),
+  Runs(_, SessionId, Letter, _, 1).
+NotSolvedThatSolvedBy(TeamId, SolvedTeamId) :-
+  TeamSolvedTask(SolvedTeamId, ContestId, Letter),
+  Teams(TeamId, _),
+  not TeamSolvedTask(TeamId, ContestId, Letter).
+SolvedThatSolvedBy(TeamId) :-
+  Teams(TeamId, _),
+  not NotSolvedThatSolvedBy(TeamId, :TeamId).

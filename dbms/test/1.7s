@@ -1,0 +1,12 @@
+select distinct SessionId
+from Sessions
+except
+  select distinct SessionId
+  from (
+    select distinct SessionId, Letter
+    from Problems natural join Sessions
+    except
+    select distinct SessionId, Letter
+    from Runs
+  ) name
+;

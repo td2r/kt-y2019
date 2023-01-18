@@ -1,0 +1,10 @@
+DELETE FROM Students
+WHERE StudentId IN (
+  SELECT DISTINCT StudentId
+  FROM Students NATURAL JOIN Plan
+  WHERE StudentId NOT IN (
+    SELECT StudentId
+    FROM Marks
+    WHERE Marks.CourseId = Plan.CourseId
+  )
+);

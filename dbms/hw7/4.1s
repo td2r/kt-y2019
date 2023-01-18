@@ -1,0 +1,8 @@
+INSERT INTO Marks
+SELECT *
+FROM NewMarks
+WHERE CourseId NOT IN (
+  SELECT CourseId
+  FROM Marks
+  WHERE Marks.StudentId = NewMarks.StudentId
+);

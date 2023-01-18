@@ -1,0 +1,13 @@
+CREATE VIEW StudentDebts(StudentId, Debts) AS
+SELECT Students.StudentId, COUNT(DISTINCT CourseId) AS Debts
+FROM Students LEFT JOIN (
+  SELECT StudentId, CourseId
+  FROM Students NATURAL JOIN Plan
+  WHERE StudentId NOT IN (
+    SELECT StudentId
+    FROM Marks
+    WHERE Marks.CourseId = Plan.CourseId
+  )
+) indebted
+ON Students.StudentId = indebted.StudentId
+GROUP BY Students.StudentId;

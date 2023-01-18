@@ -1,0 +1,2 @@
+delete from Runs
+where :ContestId = (select ContestId from Sessions where SessionId = Runs.SessionId);

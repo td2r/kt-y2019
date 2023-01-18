@@ -1,0 +1,8 @@
+UPDATE Students
+SET GroupId = (SELECT GroupId FROM Groups WHERE GroupName = :GroupName)
+WHERE EXISTS (SELECT * FROM Groups WHERE GroupName = :GroupName) AND
+  :FromGroupName IN (
+    SELECT GroupName
+    FROM Groups
+    WHERE Groups.GroupId = Students.GroupId
+  );

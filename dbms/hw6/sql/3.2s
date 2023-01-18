@@ -1,0 +1,10 @@
+  SELECT StudentName, CourseName
+  FROM (
+    SELECT DISTINCT StudentId, CourseId
+    FROM Students, Plan
+    WHERE Students.GroupId = Plan.GroupId
+    UNION
+    SELECT DISTINCT StudentId, CourseId
+    FROM Marks
+  ) sc, Students, Courses
+  WHERE sc.StudentId = Students.StudentId AND sc.CourseId = Courses.CourseId;

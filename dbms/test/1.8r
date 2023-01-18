@@ -1,0 +1,5 @@
+proj{SessionId}(Sessions) diff
+(proj{SessionId}(
+  proj{SessionId, Letter}(Problems nj Sessions) diff
+  proj{SessionId, Letter}(sigma{Accepted=1}(Runs))
+))

@@ -1,0 +1,6 @@
+select ContestId, Letter
+from Problems
+except
+select distinct ContestId, Letter
+from Sessions natural join Runs
+where Accepted = 1;

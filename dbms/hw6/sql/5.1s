@@ -1,0 +1,7 @@
+  SELECT DISTINCT Students.StudentId
+  FROM Students, Lecturers, Plan, Marks
+  WHERE Students.GroupId = Plan.GroupId AND
+    Plan.LecturerId = Lecturers.LecturerId AND
+    Students.StudentId = Marks.StudentId AND
+    Plan.CourseId = Marks.CourseId AND
+    LecturerName = :LecturerName;

@@ -1,0 +1,3 @@
+  SELECT DISTINCT StudentId
+  FROM Students NATURAL JOIN Plan NATURAL JOIN Lecturers NATURAL JOIN Marks
+  WHERE LecturerName=:LecturerName

@@ -1,0 +1,6 @@
+  HasMarks(StudentId, CourseId) :- Marks(StudentId, CourseId, _).
+  Result(StudentId, StudentName, GroupName) :-
+    Plan(GroupId, :CourseId, _),
+    Students(StudentId, StudentName, GroupId),
+    not HasMarks(StudentId, :CourseId),
+    Groups(GroupId, GroupName).

@@ -1,0 +1,1 @@
+proj{StudentName, CourseName}((proj{StudentId, CourseId}(Students nj Plan) ∖ proj{StudentId, CourseId}(Students nj Marks)) nj Students nj Courses)

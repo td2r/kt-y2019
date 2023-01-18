@@ -1,0 +1,61 @@
+-- postgresql 14
+
+CREATE FUNCTION SameMarksPrecondition()
+    RETURNS VOID
+    LANGUAGE plpgsql AS
+$$DECLARE
+    badStudent RECORD;
+BEGIN
+    FOR badStudent IN
+        SELECT StudentId, GroupId, cnt1, cnt2
+        FROM (
+            SELECT Students.StudentId, GroupId, COUNT(DISTINCT CourseId) AS cnt1
+            FROM Students LEFT JOIN Marks ON Students.StudentId = Marks.StudentId
+            GROUP BY Students.StudentId
+        ) studentsCounts NATURAL JOIN (
+            SELECT GroupId, COUNT(DISTINCT CourseId) AS cnt2
+            FROM Students LEFT JOIN Marks ON Students.StudentId = Marks.StudentId
+            GROUP BY GroupId
+        ) groupsCounts
+        WHERE cnt1 != cnt2
+    LOOP
+        RAISE EXCEPTION
+            'Student (id=%) has mark for % different courses, while his group (id=%) for %',
+            badStudent.StudentId,
+            badStudent.cnt1,
+            badStudent.GroupId,
+            badStudent.cnt2;
+    END LOOP;
+END;$$;
+
+CREATE FUNCTION CheckSameMarksModifyMarks()
+    RETURNS TRIGGER
+    LANGUAGE plpgsql
+AS $$BEGIN
+    PERFORM SameMarksPrecondition();
+    RETURN NEW;
+END$$;
+
+CREATE TRIGGER onMarkModify
+    AFTER INSERT OR UPDATE OF StudentId, CourseId OR DELETE
+    ON Marks
+    FOR EACH ROW
+    EXECUTE FUNCTION CheckSameMarksModifyMarks();
+
+CREATE FUNCTION CheckSameMarksModifyStudents()
+    RETURNS TRIGGER
+    LANGUAGE plpgsql
+AS $$BEGIN
+    PERFORM SameMarksPrecondition();
+    RETURN NEW;
+END$$;
+
+CREATE TRIGGER onStudentsModify
+    AFTER INSERT OR UPDATE OF StudentId, GroupId
+    ON Students
+    FOR EACH ROW
+EXECUTE FUNCTION CheckSameMarksModifyStudents();
+
+DO $$BEGIN
+    PERFORM SameMarksPrecondition();
+END $$;

@@ -1,0 +1,11 @@
+UPDATE Students
+SET Debts = (
+  SELECT COUNT(DISTINCT CourseId)
+  FROM Plan
+  WHERE Students.GroupId = Plan.GroupId AND
+    StudentId NOT IN (
+      SELECT StudentId
+      FROM Marks
+      WHERE Plan.CourseId = Marks.CourseId
+    )
+);

@@ -1,0 +1,14 @@
+  SELECT StudentName, CourseName
+  FROM (
+    SELECT DISTINCT StudentId, CourseId
+    FROM Students, Plan
+    WHERE Students.GroupId = Plan.GroupId AND
+      NOT EXISTS (
+        SELECT *
+        FROM Marks
+        WHERE Marks.StudentId = Students.StudentId AND
+          Marks.CourseId = Plan.CourseId AND
+          Mark > 2
+      )
+  ) sc, Students, Courses
+  WHERE sc.StudentId = Students.StudentId AND sc.CourseId = Courses.CourseId;

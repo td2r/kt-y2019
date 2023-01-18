@@ -1,0 +1,6 @@
+  SELECT GroupName, SumMark
+  FROM Groups g LEFT JOIN (
+    SELECT GroupId, SUM(Mark) AS SumMark
+    FROM Marks NATURAL JOIN Students NATURAL JOIN Groups
+    GROUP BY GroupId, GroupName
+  ) SEL1 ON g.GroupId = SEL1.GroupId;

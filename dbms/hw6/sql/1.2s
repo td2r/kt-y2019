@@ -1,0 +1,3 @@
+  SELECT StudentId, StudentName, Students.GroupId
+  FROM Students, Groups
+  WHERE Students.GroupId = Groups.GroupId and Groups.GroupName = :GroupName;

@@ -1,0 +1,7 @@
+  SELECT StudentId, StudentName, GroupId
+  FROM Students NATURAL JOIN Marks NATURAL JOIN (
+    SELECT CourseId
+    FROM Plan
+    WHERE LecturerId=:LecturerId
+  ) SEL1
+  WHERE Mark=:Mark;

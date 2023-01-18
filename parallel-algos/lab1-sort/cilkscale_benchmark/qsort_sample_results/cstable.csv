@@ -1,0 +1,3 @@
+tag,work (seconds),span (seconds),parallelism,burdened_span (seconds),burdened_parallelism,1c time (seconds),2c time (seconds),3c time (seconds),4c time (seconds)
+qsort_sample,17.8788,1.04676,17.0801,1.04709,17.0748,8.59584,4.6559,4.19023,3.48146
+,19.2274,2.39535,8.02697,2.39568,8.02588,9.7451,5.72979,5.39131,4.61506

@@ -1,0 +1,16 @@
+-- postgresql 14
+
+CREATE OR REPLACE FUNCTION RollbackMark()
+RETURNS TRIGGER LANGUAGE plpgsql AS
+    $$BEGIN
+        NEW.Mark := OLD.Mark;
+        RETURN NEW;
+    END;$$;
+
+CREATE TRIGGER PreserveMarks
+    BEFORE UPDATE
+    ON Marks
+    FOR EACH ROW
+    WHEN (NEW.Mark < OLD.Mark)
+    EXECUTE FUNCTION RollbackMark();
+

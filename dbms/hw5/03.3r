@@ -1,0 +1,1 @@
+proj{StudentId, StudentName, GroupId}(sigma{Mark=:Mark}(Marks) nj sigma{LecturerId=:LecturerId}(Plan) nj Students)

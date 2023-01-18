@@ -1,0 +1,20 @@
+  SELECT StudentId, Total, Passed, Total - Passed AS Failed
+  FROM (
+    SELECT StudentId, COUNT(CourseId) AS Total, COUNT(HasMark) AS Passed
+    FROM (
+      SELECT SEL1.StudentId, SEL1.CourseId, HasMark
+      FROM (
+        SELECT DISTINCT StudentId, CourseId
+        FROM Students s LEFT JOIN Plan p
+        ON s.GroupId = p.GroupId
+      ) SEL1 LEFT JOIN (
+        SELECT StudentId, CourseId, 1 AS HasMark
+        FROM (
+          SELECT DISTINCT StudentId, CourseId
+          FROM Marks
+        ) SEL3
+      ) SEL2
+      ON SEL1.StudentId = SEL2.StudentId and SEL1.CourseId = SEL2.CourseId
+    ) SEL4
+    GROUP BY StudentId
+  ) SEL5;

@@ -1,0 +1,5 @@
+  SELECT * FROM Students
+  EXCEPT
+  SELECT DISTINCT StudentId, StudentName, GroupId
+  FROM Courses NATURAL JOIN Marks NATURAL JOIN Students
+  WHERE CourseName=:CourseName

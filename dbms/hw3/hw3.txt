@@ -1,0 +1,103 @@
+1.
+-- Каждый id-атрибут однозначно задает именной атрибут
+-- Студент однозначно задает свою группу
+-- По группе и курсу можно узнать преподавателя
+-- Пара (студент, курс) задает оценку студента по этому курсу
+-- Курс есть уникальная пара группы и лектора
+StudentId -> StudentName, GroupId
+GroupId -> GroupName
+CourseId -> CourseName
+LecturerId -> LecturerName
+GroupId, CourseId -> LecturerId
+StudentId, CourseId -> Mark
+CourseId -> GroupId, LecturerId
+
+2.1
+StudentId, CourseId - надключ
+Обозначим множество всех атрибутов за A
+{StudentId, CourseId}+ = A
+
+Он является минимальным по включению, а значит ключ:
+{StudentId}+ = {StudentId, StudentName, GroupId, GroupName} != A
+{CourseId}+ = {CourseId, CourseName, GroupId, GroupName, LecturerId, LecturerName} != A
+
+При этом StudentId обязан присутствовать в ключе
+{A\StudentId}+ = {GroupId, GroupName, CourseId, CourseName, LecturerId, LecturerName} != A
+{A\CourseId}+ = {StudentId, StudentName, GroupId, GroupName, LecturerId, LecturerName} != A
+
+Ключ единственный
+2.2
+StudentId, CourseId
+
+3.1
+GroupId, CourseId
+GroupId, CourseId, GroupName, CourseName, LecturerId
+GroupId, CourseId, GroupName, CourseName, LecturerId, LecturerName
+3.2
+StudentId, CourseId
+StudentId, CourseId, StudentName, GroupId, GroupName, CourseName, LecturerId, Mark
+StudentId, CourseId, StudentName, GroupId, GroupName, CourseName, LecturerId, Mark, LecturerName
+3.3
+StudentId, LecturerId
+StudentId, LecturerId, StudentName, GroupId, GroupName, LecturerName
+
+4.1d
+Расщепление правых частей. Каждое правило вида X -> Y, Z расщепляем на X -> Y и X -> Z. Такой вид имеют правила:
+StudentId -> StudentName, GroupId
+CourseId -> GroupId, LecturerId
+4.1r
+StudentId -> StudentName
+StudentId -> GroupId
+GroupId -> GroupName
+CourseId -> CourseName
+LecturerId -> LecturerName
+GroupId, CourseId -> LecturerId
+StudentId, CourseId -> Mark
+CourseId -> GroupId
+CourseId -> LecturerId
+4.2d
+Удаление атрибута в левой части. Потенциально эта операция может быть применена к ФЗ:
+1. GroupId, CourseId -> LecturerId
+2. StudentId, CourseId -> Mark
+Проверка условия Y subset_of Clojure(X_S):
+1.1) Clojure(CourseId) = {CourseId, CourseName, GroupId, GroupName, LecturerId, LecturerName}
+LecturerId \in Clojure(CourseId) следовательно можно породить ФЗ CourseId -> LecturerId
+1.2) Clojure(GroupId) = {GroupId, GroupName}
+LecturerId \notin Clojure(GroupId) следовательно новая ФЗ не может быть добавлена
+2.1) Clojure(CourseId) = {CourseId, CourseName, GroupId, GroupName, LecturerId, LecturerName}
+Mark \notin Clojure(CourseId) следовательно новая ФЗ не может быть добавлена
+2.2) Clojure(StudentId) = {StudentId, StudentName, GroupId, GroupName}
+Mark \notin Clojure(StudentId) следовательно новая ФЗ не может быть добавлена
+
+Таким образом, добавляется единственная ФЗ:
+CourseId -> LecturerId
+4.2r
+StudentId -> StudentName
+StudentId -> GroupId
+GroupId -> GroupName
+CourseId -> CourseName
+LecturerId -> LecturerName
+GroupId, CourseId -> LecturerId
+StudentId, CourseId -> Mark
+CourseId -> GroupId
+CourseId -> LecturerId
+CourseId -> LecturerId
+4.3d
+Попытка удаления отдельных правил.
+ФЗ CourseId -> LecturerId дублируется и может быть удалена.
+Именные атрибуты выводятся единственным образом, ФЗ с ними не удаляются.
+Атрибут Mark выводится единственным образом, ФЗ с ним не удаляется.
+
+Clojure({GroupId, CourseId}_S\{GroupId, CourseId -> LecturerId}) = {GroupId, GroupName, CourseId, CourseName, LecturerId, LecturerName} - ФЗ удаляется
+Clojure(StudentId_S\{StudentId -> GroupId}) = {StudentId, StudentName} - не удаляется
+Clojure(CourseId_S\{CourseId -> GroupId}) = {CourseId, CourseName, LecturerId, LecturerName} - не удаляется
+Clojure(CourseId_S\{CourseId -> LecturerId}) = {CourseId, CourseName, GroupId, GroupName} - не удаляется
+4.3r
+StudentId -> StudentName
+StudentId -> GroupId
+GroupId -> GroupName
+CourseId -> CourseName
+LecturerId -> LecturerName
+StudentId, CourseId -> Mark
+CourseId -> GroupId
+CourseId -> LecturerId

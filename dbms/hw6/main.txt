@@ -1,0 +1,573 @@
+
+
+##############
+section Данные
+##############
+
+data Students
+    StudentId, StudentName       , GroupId
+    1        , 'Иванов И.И.'     , 1      
+    2        , 'Петров П.П.'     , 1      
+    3        , 'Петров П.П.'     , 2      
+    4        , 'Сидров С.С.'     , 2      
+    5        , 'Неизвестный Н.Н.', 3      
+    6        , 'Безымянный Б.Б'  , 4      
+
+data Groups
+    GroupId, GroupName
+    1      , 'M3435'  
+    2      , 'M3439'  
+    3      , 'M3238'  
+    4      , 'M3239'  
+
+data Courses
+    CourseId, CourseName             
+    1       , 'Базы данных'          
+    2       , 'Управление проектами' 
+    3       , 'ППО'                  
+    4       , 'Теория информации'    
+    6       , 'Математический анализ'
+    7       , 'Технологии Java'      
+
+data Lecturers
+    LecturerId, LecturerName    
+    1         , 'Корнеев Г.А.'  
+    2         , 'Будин Н.А.'
+    3         , 'Кузнецова Е.М.'
+    4         , 'Киракозов А.Х.'
+    6         , 'Трофимюк Г.А.' 
+    7         , 'Беляев Е.А.' 
+    8         , 'Кохась К.П.'   
+
+data Plan
+    GroupId, CourseId, LecturerId
+    1      , 1       , 2         
+    2      , 1       , 1         
+    1      , 2       , 3         
+    1      , 3       , 4         
+    2      , 3       , 4         
+    2      , 4       , 6         
+    1      , 4       , 7         
+    2      , 4       , 7         
+    4      , 6       , 8         
+    1      , 7       , 1         
+    2      , 7       , 1         
+    3      , 7       , 1         
+    4      , 7       , 1         
+
+data Marks
+    StudentId, CourseId, Mark
+    1        , 1       , 5   
+    2        , 1       , 4   
+    3        , 1       , 3   
+    2        , 2       , 3   
+    3        , 2       , 4   
+    4        , 2       , 5   
+    7        , 1       , 5   
+    8        , 1       , 5   
+    7        , 7       , 5   
+    8        , 7       , 5   
+    5        , 7       , 5   
+    6        , 7       , 5   
+    3        , 3       , 3   
+
+
+###########################################################
+section Составьте запросы в терминах языков Datalog и SQL
+        для базы данных «Университет», позволяющие получать
+###########################################################
+
+####################################
+subsection 1. Информацию о студентах
+
+comment 1.1. С заданным ФИО
+             (StudentId, StudentName, GroupId по :StudentName)
+
+set-var :StudentName = 'Иванов И.И.'
+
+print-dl
+  S(StudentId, StudentName, GroupId) :- Students(StudentId, StudentName, GroupId),
+                                        StudentName=:StudentName.
+
+print-sql
+  SELECT StudentId, StudentName, GroupId
+  FROM Students
+  WHERE StudentName = :StudentName;
+
+comment 1.2. Учащихся в заданной группе
+             (StudentId, StudentName, GroupId по :GroupName)
+
+set-var :GroupName = 'M3439'
+
+print-dl
+  S(StudentId, StudentName, GroupId) :- Students(StudentId, StudentName, GroupId),
+                                        Groups(GroupId, GroupName),
+                                        GroupName = :GroupName.
+
+print-sql
+  SELECT StudentId, StudentName, Students.GroupId
+  FROM Students, Groups
+  WHERE Students.GroupId = Groups.GroupId and Groups.GroupName = :GroupName;
+
+comment 1.3. C заданной оценкой по дисциплине,
+             заданной идентификатором
+             (StudentId, StudentName, GroupId по :Mark, :CourseId)
+
+set-var :Mark = 5
+
+set-var :CourseId = 1
+
+print-dl
+  S(StudentId, StudentName, GroupId) :- Students(StudentId, StudentName, GroupId),
+                                        Marks(StudentId, CourseId, Mark),
+                                        CourseId = :CourseId,
+                                        Mark = :Mark.
+
+print-sql
+  SELECT s.StudentId, StudentName, GroupId
+  FROM Students s, Marks m
+  WHERE s.StudentId = m.StudentId and CourseId = :CourseId and Mark = :Mark;
+
+comment 1.4. C заданной оценкой по дисциплине,
+             заданной названием
+             (StudentId, StudentName, GroupId по :Mark, :CourseName)
+
+set-var :Mark = 5
+
+set-var :CourseName = 'Базы данных'
+
+print-dl
+  S(StudentId, StudentName, GroupId) :- Marks(StudentId, CourseId, Mark),
+                                        Courses(CourseId, CourseName),
+                                        Students(StudentId, StudentName, GroupId),
+                                        CourseName = :CourseName,
+                                        Mark = :Mark.
+
+print-sql
+  SELECT s.StudentId, StudentName, GroupId
+  FROM Students s, Courses c, Marks m
+  WHERE s.StudentId = m.StudentId and
+        c.CourseId = m.CourseId and
+        CourseName = :CourseName and
+        Mark = :Mark;
+
+###########################################
+subsection 2. Полную информацию о студентах
+
+comment 2.1. Для всех студентов
+             (StudentId, StudentName, GroupName)
+
+print-dl
+  AllStudents(StudentId, StudentName, GroupName) :-
+    Students(StudentId, StudentName, GroupId),
+    Groups(GroupId, GroupName).
+
+print-sql
+  SELECT StudentId, StudentName, GroupName
+  FROM Students, Groups
+  WHERE Students.GroupId = Groups.GroupId;
+
+comment 2.2. Студентов, не имеющих оценки по дисциплине, заданной идентификатором
+             (StudentId, StudentName, GroupName по :CourseId)
+
+set-var :CourseId = 1
+
+print-dl
+  HasMarks(StudentId, CourseId) :- Marks(StudentId, CourseId, _).
+  Result(StudentId, StudentName, GroupName) :-
+    Students(StudentId, StudentName, GroupId),
+    Groups(GroupId, GroupName),
+    not HasMarks(StudentId, :CourseId).
+
+print-sql
+  SELECT StudentId, StudentName, GroupName
+  FROM Students, Groups
+  WHERE Students.GroupId = Groups.GroupId and
+    StudentId NOT IN (SELECT DISTINCT StudentId FROM Marks WHERE CourseId = :CourseId);
+
+comment 2.3. Студентов, не имеющих оценки по дисциплине, заданной названием
+             (StudentId, StudentName, GroupName по :CourseName)
+
+set-var :CourseName = 'Базы данных'
+
+print-dl
+  HasMarks(StudentId, CourseName) :-
+    Marks(StudentId, CourseId, _),
+    Courses(CourseId, CourseName).
+  Result(StudentId, StudentName, GroupName) :-
+    Students(StudentId, StudentName, GroupId),
+    Groups(GroupId, GroupName),
+    not HasMarks(StudentId, :CourseName).
+
+print-sql
+  SELECT StudentId, StudentName, GroupName
+  FROM Students, Groups
+  WHERE Students.GroupId = Groups.GroupId AND
+    StudentId NOT IN (
+      SELECT DISTINCT StudentId
+      FROM Courses, Marks
+      WHERE Courses.CourseId = Marks.CourseId AND CourseName = :CourseName
+    );
+
+comment 2.4. Студентов, не имеющих оценки по дисциплине,
+             у которых есть эта дисциплина
+             (StudentId, StudentName, GroupName по :CourseId)
+
+set-var :CourseId = 1
+
+print-dl
+  HasMarks(StudentId, CourseId) :- Marks(StudentId, CourseId, _).
+  Result(StudentId, StudentName, GroupName) :-
+    Plan(GroupId, :CourseId, _),
+    Students(StudentId, StudentName, GroupId),
+    not HasMarks(StudentId, :CourseId),
+    Groups(GroupId, GroupName).
+
+print-sql
+  SELECT DISTINCT StudentId, StudentName, GroupName
+  FROM Students, Groups, Plan
+  WHERE Students.GroupId = Groups.GroupId AND
+    Plan.GroupId = Groups.GroupId AND
+    CourseId = :CourseId AND
+    StudentId NOT IN (SELECT DISTINCT StudentId FROM Marks WHERE CourseId = :CourseId);
+
+comment 2.5. Студентов, не имеющих оценки по дисциплине,
+             у которых есть эта дисциплина
+             (StudentId, StudentName, GroupName по :CourseName)
+
+set-var :CourseName = 'Базы данных'
+
+print-dl
+  HasMarks(StudentId, CourseName) :-
+    Courses(CourseId, CourseName),
+    Marks(StudentId, CourseId, _).
+  Result(StudentId, StudentName, GroupName) :-
+    Students(StudentId, StudentName, GroupId),
+    Groups(GroupId, GroupName),
+    Plan(GroupId, CourseId, _),
+    Courses(CourseId, :CourseName),
+    not HasMarks(StudentId, :CourseName).
+
+print-sql
+  SELECT DISTINCT StudentId, StudentName, GroupName
+  FROM Students, Groups, Plan, Courses
+  WHERE Students.GroupId = Groups.GroupId AND
+    Plan.GroupId = Groups.GroupId AND
+    Plan.CourseId = Courses.CourseId AND
+    CourseName = :CourseName AND
+    StudentId NOT IN (
+      SELECT DISTINCT StudentId
+      FROM Courses, Marks
+      WHERE Courses.CourseId = Marks.CourseId AND CourseName = :CourseName
+    );
+
+#########################################################################
+subsection 3. Студенты и дисциплины, такие что у студента была дисциплина
+              (по плану или есть оценка)
+
+comment 3.1. Идентификаторы
+             (StudentId, CourseId)
+
+print-dl
+  Result(StudentId, CourseId) :-
+    Students(StudentId, _, GroupId),
+    Plan(GroupId, CourseId, _).
+  Result(StudentId, CourseId) :-
+    Marks(StudentId, CourseId, _).
+
+print-sql
+  SELECT DISTINCT StudentId, CourseId
+  FROM Students, Plan
+  WHERE Students.GroupId = Plan.GroupId
+  UNION
+  SELECT DISTINCT StudentId, CourseId
+  FROM Marks;
+
+comment 3.2. Имя и название
+             (StudentName, CourseName)
+
+print-dl
+  Result(StudentName, CourseName) :-
+    Students(StudentId, StudentName, GroupId),
+    Plan(GroupId, CourseId, _),
+    Courses(CourseId, CourseName).
+  Result(StudentName, CourseName) :-
+    Marks(StudentId, CourseId, _),
+    Students(StudentId, StudentName, _),
+    Courses(CourseId, CourseName).
+
+print-sql
+  SELECT StudentName, CourseName
+  FROM (
+    SELECT DISTINCT StudentId, CourseId
+    FROM Students, Plan
+    WHERE Students.GroupId = Plan.GroupId
+    UNION
+    SELECT DISTINCT StudentId, CourseId
+    FROM Marks
+  ) sc, Students, Courses
+  WHERE sc.StudentId = Students.StudentId AND sc.CourseId = Courses.CourseId;
+
+##################################################
+subsection 4. Студенты и дисциплины, такие что
+              дисциплина есть в его плане,
+              и у студента долг по этой дисциплине
+
+comment 4.1. Долгом считается отсутствие оценки
+             (StudentName, CourseName)
+
+print-dl
+  HasMarks(StudentId, CourseId) :-
+    Marks(StudentId, CourseId, _).
+  Result(StudentName, CourseName) :-
+    Plan(GroupId, CourseId, _),
+    Students(StudentId, StudentName, GroupId),
+    Courses(CourseId, CourseName),
+    not HasMarks(StudentId, CourseId).
+
+print-sql
+  SELECT StudentName, CourseName
+  FROM (
+    SELECT DISTINCT StudentId, CourseId
+    FROM Students, Plan
+    WHERE Students.GroupId = Plan.GroupId AND
+      NOT EXISTS (
+        SELECT *
+        FROM Marks
+        WHERE Marks.StudentId = Students.StudentId AND Marks.CourseId = Plan.CourseId
+      )
+  ) sc, Students, Courses
+  WHERE sc.StudentId = Students.StudentId AND sc.CourseId = Courses.CourseId;
+
+comment 4.2. Долгом считается оценка не выше 2
+             (StudentName, CourseName)
+
+print-dl
+  Result(StudentName, CourseName) :-
+    Plan(GroupId, CourseId, _),
+    Students(StudentId, StudentName, GroupId),
+    Courses(CourseId, CourseName),
+    Marks(StudentId, CourseId, Mark),
+    Mark <= 2.
+
+print-sql
+  SELECT StudentName, CourseName
+  FROM (
+    SELECT DISTINCT Students.StudentId, Plan.CourseId
+    FROM Students, Plan, Marks
+    WHERE Students.StudentId = Marks.StudentId AND
+      Plan.GroupId = Students.GroupId AND
+      Plan.CourseId = Marks.CourseId AND
+      Mark <= 2
+  ) sc, Students, Courses
+  WHERE sc.StudentId = Students.StudentId AND sc.CourseId = Courses.CourseId;
+
+comment 4.3. Долгом считается отсутствие оценки или оценка не выше 2
+             (StudentName, CourseName)
+
+print-dl
+  Passed(StudentId, CourseId) :-
+    Marks(StudentId, CourseId, Mark),
+    Mark > 2.
+  Result(StudentName, CourseName) :-
+    Plan(GroupId, CourseId, _),
+    Students(StudentId, StudentName, GroupId),
+    not Passed(StudentId, CourseId),
+    Courses(CourseId, CourseName).
+
+print-sql
+  SELECT StudentName, CourseName
+  FROM (
+    SELECT DISTINCT StudentId, CourseId
+    FROM Students, Plan
+    WHERE Students.GroupId = Plan.GroupId AND
+      NOT EXISTS (
+        SELECT *
+        FROM Marks
+        WHERE Marks.StudentId = Students.StudentId AND
+          Marks.CourseId = Plan.CourseId AND
+          Mark > 2
+      )
+  ) sc, Students, Courses
+  WHERE sc.StudentId = Students.StudentId AND sc.CourseId = Courses.CourseId;
+
+#######################################################
+subsection 5. Идентификаторы студентов по преподавателю
+
+comment 5.1. Имеющих хотя бы одну оценку у преподавателя
+             (StudentId по :LecturerName)
+
+set-var :LecturerName = 'Корнеев Г.А.'
+
+print-dl
+  Result(StudentId) :-
+    Lecturers(LecturerId, :LecturerName),
+    Plan(GroupId, CourseId, LecturerId),
+    Students(StudentId, _, GroupId),
+    Marks(StudentId, CourseId, _).
+
+print-sql
+  SELECT DISTINCT Students.StudentId
+  FROM Students, Lecturers, Plan, Marks
+  WHERE Students.GroupId = Plan.GroupId AND
+    Plan.LecturerId = Lecturers.LecturerId AND
+    Students.StudentId = Marks.StudentId AND
+    Plan.CourseId = Marks.CourseId AND
+    LecturerName = :LecturerName;
+
+comment 5.2. Не имеющих ни одной оценки у преподавателя
+             (StudentId по :LecturerName)
+
+set-var :LecturerName = 'Корнеев Г.А.'
+
+print-dl
+  HasMark(StudentId, LecturerName) :-
+    Lecturers(LecturerId, LecturerName),
+    Plan(GroupId, CourseId, LecturerId),
+    Students(StudentId, _, GroupId),
+    Marks(StudentId, CourseId, _).
+  Result(StudentId) :- Students(StudentId, _, _), not HasMark(StudentId, :LecturerName).
+
+print-sql
+  SELECT StudentId
+  FROM Students
+  WHERE StudentId NOT IN (
+    SELECT DISTINCT Students.StudentId
+    FROM Students, Lecturers, Plan, Marks
+    WHERE Students.GroupId = Plan.GroupId AND
+      Plan.LecturerId = Lecturers.LecturerId AND
+      Students.StudentId = Marks.StudentId AND
+      Plan.CourseId = Marks.CourseId AND
+      LecturerName = :LecturerName
+  );
+
+comment 5.3. Имеющих оценки по всем дисциплинам преподавателя
+             (StudentId по :LecturerName)
+
+set-var :LecturerName = 'Корнеев Г.А.'
+
+print-dl
+  HasMark(StudentId, CourseId) :- Marks(StudentId, CourseId, _).
+  HasLecturerCourseWithNoMark(StudentId, LecturerName) :-
+    Lecturers(LecturerId, LecturerName),
+    Plan(_, CourseId, LecturerId),
+    Students(StudentId, _, _),
+    not HasMark(StudentId, CourseId).
+  Result(StudentId) :-
+    Students(StudentId, _, _),
+    not HasLecturerCourseWithNoMark(StudentId, :LecturerName).
+
+print-sql
+  SELECT StudentId
+  FROM Students
+  WHERE StudentId NOT IN (
+    SELECT StudentId
+    FROM Students s, Plan, Lecturers
+    WHERE Plan.LecturerId = Lecturers.LecturerId AND
+      LecturerName = :LecturerName AND
+      NOT EXISTS (
+        SELECT *
+        FROM Marks
+        WHERE Marks.StudentId = s.StudentId AND
+          Marks.CourseId = Plan.CourseId
+      )
+  );
+
+comment 5.4. Имеющих оценки по всем дисциплинам преподавателя,
+             которые он вёл у этого студента
+             (StudentId по :LecturerName)
+
+set-var :LecturerName = 'Корнеев Г.А.'
+
+print-dl
+  HasMark(StudentId, CourseId) :- Marks(StudentId, CourseId, _).
+  HasLecturerCourseWithNoMark(StudentId, LecturerName) :-
+    Lecturers(LecturerId, LecturerName),
+    Plan(GroupId, CourseId, LecturerId),
+    Students(StudentId, _, GroupId),
+    not HasMark(StudentId, CourseId).
+  Result(StudentId) :-
+    Students(StudentId, _, _),
+    not HasLecturerCourseWithNoMark(StudentId, :LecturerName).
+
+print-sql
+  SELECT StudentId
+  FROM Students
+  WHERE StudentId NOT IN (
+    SELECT StudentId
+    FROM Students s, Plan, Lecturers
+    WHERE Plan.GroupId = s.GroupId AND
+      Plan.LecturerId = Lecturers.LecturerId AND
+      LecturerName = :LecturerName AND
+      NOT EXISTS (
+        SELECT *
+        FROM Marks
+        WHERE Marks.StudentId = s.StudentId AND
+          Marks.CourseId = Plan.CourseId
+      )
+  );
+
+##########################################################
+subsection 6. Группы и дисциплины, такие что
+              все студенты группы имеют оценку по предмету
+
+comment 6.1. Идентификаторы
+             (GroupId, CourseId)
+
+print-dl
+  HasMark(StudentId, CourseId) :- Marks(StudentId, CourseId, _).
+  HasStudentWithoutCourseMark(GroupId, CourseId) :-
+    Students(StudentId, _, GroupId),
+    Courses(CourseId, _),
+    not HasMark(StudentId, CourseId).
+  Result(GroupId, CourseId) :-
+    Groups(GroupId, _),
+    Courses(CourseId, _),
+    not HasStudentWithoutCourseMark(GroupId, CourseId).
+
+print-sql
+  SELECT GroupId, CourseId
+  FROM Groups, Courses
+  WHERE NOT EXISTS (
+    SELECT *
+    FROM Students
+    WHERE Students.GroupId = Groups.GroupId AND
+      NOT EXISTS (
+        SELECT *
+        FROM Marks
+        WHERE Marks.StudentId = Students.StudentId AND
+          Marks.CourseId = Courses.CourseId
+      )
+  );
+
+comment 6.2. Названия
+             (GroupName, CourseName)
+
+print-dl
+  HasMark(StudentId, CourseName) :-
+    Courses(CourseId, CourseName),
+    Marks(StudentId, CourseId, _).
+  HasStudentWithoutCourseMark(GroupName, CourseName) :-
+    Groups(GroupId, GroupName),
+    Students(StudentId, _, GroupId),
+    Courses(_, CourseName),
+    not HasMark(StudentId, CourseName).
+  Result(GroupName, CourseName) :-
+    Groups(_, GroupName),
+    Courses(_, CourseName),
+    not HasStudentWithoutCourseMark(GroupName, CourseName).
+
+print-sql
+  SELECT GroupName, CourseName
+  FROM Groups, Courses
+  WHERE NOT EXISTS (
+    SELECT *
+    FROM Students
+    WHERE Students.GroupId = Groups.GroupId AND
+      NOT EXISTS (
+        SELECT *
+        FROM Marks
+        WHERE Marks.StudentId = Students.StudentId AND
+          Marks.CourseId = Courses.CourseId
+      )
+  );

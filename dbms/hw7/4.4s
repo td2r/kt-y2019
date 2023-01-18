@@ -1,0 +1,9 @@
+MERGE INTO Marks m
+USING NewMarks nm
+ON m.StudentId = nm.StudentId AND
+  m.CourseId = nm.CourseId
+WHEN MATCHED AND nm.Mark > m.Mark THEN
+  UPDATE SET Mark = nm.Mark
+WHEN NOT MATCHED THEN
+  INSERT (StudentId, CourseId, Mark)
+  VALUES (nm.StudentId, nm.CourseId, nm.Mark);

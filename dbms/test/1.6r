@@ -1,0 +1,7 @@
+proj{TeamName}(
+  Teams nj
+  proj{TeamId}(
+    proj{TeamId, ContestId}(Teams nj Sessions) diff
+    proj{TeamId, ContestId}(sigma{Accepted=1}(Sessions nj Runs))
+  )
+)

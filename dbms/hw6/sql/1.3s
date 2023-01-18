@@ -1,0 +1,3 @@
+  SELECT s.StudentId, StudentName, GroupId
+  FROM Students s, Marks m
+  WHERE s.StudentId = m.StudentId and CourseId = :CourseId and Mark = :Mark;

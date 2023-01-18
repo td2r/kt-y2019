@@ -1,0 +1,5 @@
+  SELECT StudentName, CourseName
+  FROM (
+    SELECT DISTINCT GroupId, CourseName
+    FROM Plan NATURAL JOIN Courses
+  ) S1 NATURAL JOIN Students

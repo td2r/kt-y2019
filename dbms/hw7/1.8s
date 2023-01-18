@@ -1,0 +1,12 @@
+DELETE FROM Students
+WHERE StudentId NOT IN (
+  SELECT StudentId
+  FROM Students NATURAL JOIN Plan
+  WHERE StudentId NOT IN (
+    SELECT StudentId
+    FROM Marks
+    WHERE Marks.CourseId = Plan.CourseId
+  )
+  GROUP BY StudentId
+  HAVING COUNT(DISTINCT CourseId) > 2
+);
